@@ -2,32 +2,67 @@ import { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  TouchableOpacity,
+  Animated,
 } from "react-native";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, typography, spacing, radius } from "@/lib/design-tokens";
+import { useScreenInsets } from "@/hooks/useScreenInsets";
+import { useTheme } from "@/hooks/useTheme";
+import { useEntranceAnimation, useFadeAnimation } from "@/hooks/useEntranceAnimation";
+import { AnimatedBackground } from "@/components/auth/AnimatedBackground";
+import { AuthInput } from "@/components/auth/AuthInput";
+import { AuthButton } from "@/components/auth/AuthButton";
+import { SocialButton } from "@/components/auth/SocialButton";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useGuestStore } from "@/stores/guest.store";
 import * as Haptics from "expo-haptics";
 
 export default function SignIn() {
   const { signIn } = useAuthActions();
-  const insets = useSafeAreaInsets();
+  const { top, bottom } = useScreenInsets();
+  const { colors } = useTheme();
+  const setGuest = useGuestStore((s) => s.setGuest);
+  const exitGuest = useGuestStore((s) => s.exitGuest);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const logoAnim = useEntranceAnimation({ duration: 500 });
+  const emailAnim = useEntranceAnimation({ delay: 80, duration: 400 });
+  const passwordAnim = useEntranceAnimation({ delay: 160, duration: 400 });
+  const btnAnim = useEntranceAnimation({ delay: 240, duration: 400 });
+  const dividerAnim = useFadeAnimation({ delay: 350, duration: 400 });
+  const socialAnim = useEntranceAnimation({ delay: 400, duration: 400 });
+  const footerAnim = useFadeAnimation({ delay: 550, duration: 400 });
+
+  const validate = () => {
+    let valid = true;
+    setEmailError("");
+    setPasswordError("");
+
+    if (!email.trim()) {
+      setEmailError("Email is required");
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setEmailError("Enter a valid email");
+      valid = false;
+    }
+    if (!password.trim()) {
+      setPasswordError("Password is required");
+      valid = false;
+    }
+    return valid;
+  };
 
   const handleSignIn = async () => {
-    if (!email.trim() || !password.trim()) {
-      setError("Please fill in all fields");
-      return;
-    }
+    if (!validate()) return;
     setLoading(true);
     setError("");
     try {
@@ -36,184 +71,217 @@ export default function SignIn() {
       formData.append("password", password);
       formData.append("flow", "signIn");
       await signIn("password", formData as any);
+      exitGuest();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace("/");
     } catch (e: any) {
-      setError(e?.message || "Sign in failed");
+      const msg = e?.message || "Sign in failed";
+      setError(msg);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, backgroundColor: colors.light.background }}
-    >
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: "center",
-          paddingHorizontal: spacing.xl,
-          paddingTop: insets.top + spacing.xl,
-          paddingBottom: insets.bottom + spacing.xl,
-        }}
-        keyboardShouldPersistTaps="handled"
+  const content = (
+    <>
+      <Animated.View
+        style={[
+          {
+            opacity: logoAnim.opacity,
+            transform: [{ scale: logoAnim.scale }],
+          },
+        ]}
+        className="items-center mb-9"
       >
-        <View style={{ marginBottom: spacing.xxxl }}>
-          <Text
-            style={{
-              fontSize: typography.h1.fontSize,
-              fontWeight: typography.h1.fontWeight,
-              color: colors.light.text,
-              textAlign: "center",
-            }}
-          >
-            OKAZ
+        <Text className="text-display text-foreground tracking-[4px] font-[Montserrat_700Bold]">
+          OKAZ
+        </Text>
+        <Animated.View
+          style={{
+            height: 3,
+            backgroundColor: colors.primary,
+            borderRadius: 2,
+            marginTop: 6,
+            opacity: logoAnim.opacity,
+            width: logoAnim.scale.interpolate({
+              inputRange: [0.95, 1],
+              outputRange: [0, 40],
+              extrapolate: "clamp",
+            }),
+          }}
+        />
+        <Text className="text-[13px] text-muted-foreground mt-2.5 font-[Montserrat_500Medium]">
+          Welcome back
+        </Text>
+      </Animated.View>
+      {error ? (
+        <Animated.View
+          accessibilityRole="alert"
+          className="bg-destructive-light rounded-xl p-3 mb-4 border-l-[3px]"
+          style={{ borderLeftColor: colors.destructive }}
+        >
+          <Text className="text-destructive text-[13px] font-[Montserrat_500Medium]">
+            {error}
           </Text>
-          <Text
-            style={{
-              fontSize: typography.caption.fontSize,
-              color: colors.light.textSecondary,
-              textAlign: "center",
-              marginTop: spacing.xs,
+        </Animated.View>
+      ) : null}
+      <View className="gap-3.5">
+        <Animated.View
+          style={{
+            opacity: emailAnim.opacity,
+            transform: [{ translateY: emailAnim.translateY }],
+          }}
+        >
+          <AuthInput
+            label="Email"
+            value={email}
+            onChangeText={(t) => {
+              setEmail(t);
+              setEmailError("");
+              setError("");
             }}
-          >
-            Sign in to your account
+            placeholder="you@example.com"
+            keyboardType="email-address"
+            textContentType="emailAddress"
+            autoComplete="email"
+            error={emailError}
+            accessibilityLabel="Email address"
+          />
+        </Animated.View>
+        <Animated.View
+          style={{
+            opacity: passwordAnim.opacity,
+            transform: [{ translateY: passwordAnim.translateY }],
+          }}
+        >
+          <AuthInput
+            label="Password"
+            value={password}
+            onChangeText={(t) => {
+              setPassword(t);
+              setPasswordError("");
+              setError("");
+            }}
+            placeholder="Enter your password"
+            secureTextEntry
+            textContentType="password"
+            autoComplete="password"
+            error={passwordError}
+            accessibilityLabel="Password"
+          />
+        </Animated.View>
+        <Animated.View
+          style={{
+            opacity: btnAnim.opacity,
+            transform: [{ scale: btnAnim.scale }],
+          }}
+        >
+          <AuthButton label="Sign In" onPress={handleSignIn} loading={loading} />
+        </Animated.View>
+      </View>
+      <Animated.View
+        style={[
+          { opacity: dividerAnim.opacity },
+        ]}
+        className="flex-row items-center gap-3 my-6"
+      >
+        <View className="flex-1 h-px" style={{ backgroundColor: colors.border }} />
+        <Text className="text-xs text-muted-foreground font-[Montserrat_500Medium]">
+          or continue with
+        </Text>
+        <View className="flex-1 h-px" style={{ backgroundColor: colors.border }} />
+      </Animated.View>
+      <Animated.View
+        style={[
+          {
+            opacity: socialAnim.opacity,
+            transform: [{ translateY: socialAnim.translateY }],
+          },
+        ]}
+        className="gap-2.5"
+      >
+        <SocialButton provider="google" />
+        <SocialButton provider="apple" />
+      </Animated.View>
+      <Animated.View
+        style={[
+          { opacity: footerAnim.opacity },
+        ]}
+        className="items-center mt-6 gap-3.5"
+      >
+        <TouchableOpacity
+          onPress={() => {
+            setGuest();
+            router.replace("/(customer)");
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Continue as guest"
+          activeOpacity={0.6}
+          className="justify-center min-h-[44px]"
+          style={{ padding: 8 }}
+        >
+          <Text className="text-sm text-muted-foreground font-[Montserrat_600SemiBold]">
+            Continue as Guest
           </Text>
-        </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.push("/(auth)/sign-up")}
+          accessibilityRole="link"
+          accessibilityLabel="Create an account"
+          activeOpacity={0.6}
+          className="justify-center"
+          style={{ padding: 8 }}
+        >
+          <Text className="text-[13px] text-primary font-[Montserrat_600SemiBold]">
+            Don&apos;t have an account? Sign up
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </>
+  );
 
-        {error ? (
-          <View
-            style={{
-              backgroundColor: colors.light.destructiveLight,
-              padding: spacing.md,
-              borderRadius: radius.sm,
-              marginBottom: spacing.lg,
-            }}
-            accessibilityRole="alert"
-          >
-            <Text style={{ color: colors.light.destructive, fontSize: typography.caption.fontSize }}>
-              {error}
-            </Text>
-          </View>
-        ) : null}
-
-        <View style={{ gap: spacing.lg }}>
-          <View>
-            <Text
-              style={{
-                fontSize: typography.caption.fontSize,
-                fontWeight: "600",
-                color: colors.light.text,
-                marginBottom: spacing.xs,
-              }}
-            >
-              Email
-            </Text>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              autoCapitalize="none"
-              keyboardType="email-address"
-              textContentType="emailAddress"
-              autoComplete="email"
-              accessibilityLabel="Email address"
-              style={{
-                backgroundColor: colors.light.surface,
-                borderWidth: 1,
-                borderColor: colors.light.border,
-                borderRadius: radius.sm,
-                padding: spacing.md,
-                fontSize: typography.body.fontSize,
-                color: colors.light.text,
-                minHeight: 48,
-              }}
-            />
-          </View>
-
-          <View>
-            <Text
-              style={{
-                fontSize: typography.caption.fontSize,
-                fontWeight: "600",
-                color: colors.light.text,
-                marginBottom: spacing.xs,
-              }}
-            >
-              Password
-            </Text>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Enter your password"
-              secureTextEntry
-              textContentType="password"
-              autoComplete="password"
-              accessibilityLabel="Password"
-              style={{
-                backgroundColor: colors.light.surface,
-                borderWidth: 1,
-                borderColor: colors.light.border,
-                borderRadius: radius.sm,
-                padding: spacing.md,
-                fontSize: typography.body.fontSize,
-                color: colors.light.text,
-                minHeight: 48,
-              }}
-            />
-          </View>
-
-          <TouchableOpacity
-            onPress={handleSignIn}
-            disabled={loading}
-            accessibilityRole="button"
-            accessibilityLabel="Sign in"
-            style={{
-              backgroundColor: colors.light.primary,
-              borderRadius: radius.sm,
-              padding: spacing.md,
-              minHeight: 48,
-              alignItems: "center",
+  return (
+    <View className="flex-1 bg-background">
+      <AnimatedBackground />
+      <View className="absolute right-4 z-10" style={{ top: top + 8 }}>
+        <ThemeToggle size={22} />
+      </View>
+      {Platform.OS === "web" ? (
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+            paddingHorizontal: 24,
+            paddingTop: 40,
+            paddingBottom: 40,
+          }}
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+        >
+          {content}
+        </ScrollView>
+      ) : (
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1"
+        >
+          <ScrollView
+            contentContainerStyle={{
+              flexGrow: 1,
               justifyContent: "center",
-              opacity: loading ? 0.6 : 1,
+              paddingHorizontal: 24,
+              paddingTop: top + 40,
+              paddingBottom: bottom + 40,
             }}
+            className="flex-1"
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text
-                style={{
-                  color: "#FFFFFF",
-                  fontSize: typography.body.fontSize,
-                  fontWeight: "700",
-                }}
-              >
-                Sign In
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          <Link href="/(auth)/sign-up" asChild>
-            <TouchableOpacity
-              accessibilityRole="link"
-              accessibilityLabel="Create an account"
-              style={{ alignItems: "center", padding: spacing.xs }}
-            >
-              <Text
-                style={{
-                  fontSize: typography.caption.fontSize,
-                  color: colors.light.primary,
-                  fontWeight: "600",
-                }}
-              >
-                Don't have an account? Sign up
-              </Text>
-            </TouchableOpacity>
-          </Link>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            {content}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      )}
+    </View>
   );
 }

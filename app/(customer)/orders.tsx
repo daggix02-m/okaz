@@ -1,46 +1,51 @@
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View } from "react-native";
 import { Package } from "lucide-react-native";
-import { colors, typography, spacing, statusColors } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 import { useOrders } from "@/hooks/useOrders";
+import { useCurrentUser } from "@/hooks/useAuth";
 import { OrderCard } from "@/components/OrderCard";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Screen, ScreenHeader, ScreenFlatList } from "@/components/ui/Screen";
 import { router } from "expo-router";
 
 export default function CustomerOrders() {
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const { isGuest } = useCurrentUser();
   const orders = useOrders();
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.light.background }}>
-      <View style={{ paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border }}>
-        <Text style={{ fontSize: typography.h2.fontSize, fontWeight: typography.h2.fontWeight, color: colors.light.text }}>
-          My Orders
-        </Text>
-      </View>
+    <Screen>
+      <ScreenHeader title="My Orders" />
 
-      {!orders ? (
-        <View style={{ padding: spacing.lg, gap: spacing.md }}>
+      {isGuest ? (
+        <EmptyState
+          icon={<Package size={48} color={colors.mutedForeground} />}
+          title="Sign in to view orders"
+          message="Create an account or sign in to track your orders."
+          action={{ label: "Sign In", onPress: () => router.push("/(auth)/sign-in") }}
+        />
+      ) : !orders ? (
+        <View className="gap-3 p-4">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} height={160} />
           ))}
         </View>
       ) : orders.length === 0 ? (
         <EmptyState
-          icon={<Package size={48} color={colors.light.textTertiary} />}
+          icon={<Package size={48} color={colors.mutedForeground} />}
           title="No orders yet"
           message="Items you order from merchants will appear here."
           action={{ label: "Start Shopping", onPress: () => router.push("/(customer)") }}
         />
       ) : (
-        <FlatList
+        <ScreenFlatList
           data={orders}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
+          contentContainerStyle={{ padding: 16 }}
           renderItem={({ item }) => <OrderCard order={item} />}
         />
       )}
-    </View>
+    </Screen>
   );
 }

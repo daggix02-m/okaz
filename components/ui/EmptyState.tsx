@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import { colors, typography, spacing } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -9,36 +9,18 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, title, message, action }: EmptyStateProps) {
+  const { colors } = useTheme();
+
   return (
     <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: spacing.xxl,
-      }}
+      className="flex-1 justify-center items-center p-8"
       accessibilityLabel={title}
     >
-      {icon && <View style={{ marginBottom: spacing.lg }}>{icon}</View>}
-      <Text
-        style={{
-          fontSize: typography.h3.fontSize,
-          fontWeight: typography.h3.fontWeight,
-          color: colors.light.text,
-          textAlign: "center",
-          marginBottom: spacing.sm,
-        }}
-      >
+      {icon && <View className="mb-4">{icon}</View>}
+      <Text className="text-lg font-semibold text-foreground text-center mb-2 font-['Montserrat_600SemiBold']">
         {title}
       </Text>
-      <Text
-        style={{
-          fontSize: typography.caption.fontSize,
-          color: colors.light.textSecondary,
-          textAlign: "center",
-          marginBottom: action ? spacing.xl : 0,
-        }}
-      >
+      <Text className={`text-xs text-muted-foreground text-center font-['Montserrat_500Medium'] ${action ? 'mb-6' : ''}`}>
         {message}
       </Text>
       {action && (
@@ -46,17 +28,9 @@ export function EmptyState({ icon, title, message, action }: EmptyStateProps) {
           onPress={action.onPress}
           accessibilityRole="button"
           accessibilityLabel={action.label}
-          style={{
-            backgroundColor: colors.light.primary,
-            paddingHorizontal: spacing.xl,
-            paddingVertical: spacing.md,
-            borderRadius: 8,
-            minHeight: 48,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
+          className="bg-primary px-6 py-3 rounded-lg min-h-[48px] justify-center items-center"
         >
-          <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 14 }}>{action.label}</Text>
+          <Text className="text-primary-foreground font-bold text-sm font-['Montserrat_700Bold']">{action.label}</Text>
         </TouchableOpacity>
       )}
     </View>

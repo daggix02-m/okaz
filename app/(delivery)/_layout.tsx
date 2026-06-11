@@ -2,17 +2,19 @@ import { Tabs, Redirect } from "expo-router";
 import { useCurrentUser } from "@/hooks/useAuth";
 import { View, ActivityIndicator } from "react-native";
 import { Package, Map, DollarSign } from "lucide-react-native";
-import { colors } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getTabBarScreenOptions } from "@/lib/tab-bar-options";
 
 export default function DeliveryLayout() {
   const { isLoading, isAuthenticated, user } = useCurrentUser();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.light.background }}>
-        <ActivityIndicator size="large" color={colors.light.primary} />
+      <View className="flex-1 justify-center items-center bg-background">
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -21,24 +23,10 @@ export default function DeliveryLayout() {
   if (user?.role !== "delivery") return <Redirect href="/" />;
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#D97706",
-        tabBarInactiveTintColor: colors.light.textTertiary,
-        tabBarStyle: {
-          backgroundColor: colors.light.background,
-          borderTopColor: colors.light.border,
-          height: 56 + insets.bottom,
-          paddingBottom: insets.bottom,
-          paddingTop: 4,
-        },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: "Jobs", tabBarIcon: ({ color, size }) => <Package size={size} color={color} /> }} />
-      <Tabs.Screen name="map" options={{ title: "Map", tabBarIcon: ({ color, size }) => <Map size={size} color={color} /> }} />
-      <Tabs.Screen name="earnings" options={{ title: "Earnings", tabBarIcon: ({ color, size }) => <DollarSign size={size} color={color} /> }} />
+    <Tabs screenOptions={getTabBarScreenOptions(colors, insets)}>
+      <Tabs.Screen name="index" options={{ title: "Jobs", tabBarIcon: ({ focused, color, size }) => <Package size={size} color={color} fill={focused ? color : "transparent"} /> }} />
+      <Tabs.Screen name="map" options={{ title: "Map", tabBarIcon: ({ focused, color, size }) => <Map size={size} color={color} /> }} />
+      <Tabs.Screen name="earnings" options={{ title: "Earnings", tabBarIcon: ({ focused, color, size }) => <DollarSign size={size} color={color} /> }} />
     </Tabs>
   );
 }

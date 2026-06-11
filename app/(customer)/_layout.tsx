@@ -1,77 +1,77 @@
 import { Tabs, Redirect } from "expo-router";
 import { useCurrentUser } from "@/hooks/useAuth";
-import { View, ActivityIndicator, Text } from "react-native";
+import { View, ActivityIndicator } from "react-native";
 import { ShoppingBag, Package, ShoppingCart, Heart, User } from "lucide-react-native";
-import { colors } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getTabBarScreenOptions } from "@/lib/tab-bar-options";
 
 export default function CustomerLayout() {
-  const { isLoading, isAuthenticated, user } = useCurrentUser();
+  const { isLoading, isAuthenticated, isGuest, user } = useCurrentUser();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.light.background }}>
-        <ActivityIndicator size="large" color={colors.light.primary} />
+      <View className="flex-1 justify-center items-center bg-background">
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/sign-in" />;
-  if (user?.role !== "customer") return <Redirect href="/" />;
+  if (isGuest) {
+    // Guest can browse but auth-required tabs show sign-in prompts
+  } else if (!isAuthenticated) {
+    return <Redirect href="/(auth)/sign-in" />;
+  } else if (user?.role !== "customer") {
+    return <Redirect href="/" />;
+  }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.light.primary,
-        tabBarInactiveTintColor: colors.light.textTertiary,
-        tabBarStyle: {
-          backgroundColor: colors.light.background,
-          borderTopColor: colors.light.border,
-          height: 56 + insets.bottom,
-          paddingBottom: insets.bottom,
-          paddingTop: 4,
-        },
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: "600",
-        },
-      }}
-    >
+    <Tabs screenOptions={getTabBarScreenOptions(colors, insets)}>
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size }) => <ShoppingBag size={size} color={color} />,
+          tabBarIcon: ({ focused, color, size }) => (
+            <ShoppingBag size={size} color={color} fill={focused ? color : "transparent"} />
+          ),
         }}
       />
       <Tabs.Screen
         name="orders"
         options={{
           title: "Orders",
-          tabBarIcon: ({ color, size }) => <Package size={size} color={color} />,
+          tabBarIcon: ({ focused, color, size }) => (
+            <Package size={size} color={color} fill={focused ? color : "transparent"} />
+          ),
         }}
       />
       <Tabs.Screen
         name="cart"
         options={{
           title: "Cart",
-          tabBarIcon: ({ color, size }) => <ShoppingCart size={size} color={color} />,
+          tabBarIcon: ({ focused, color, size }) => (
+            <ShoppingCart size={size} color={color} fill={focused ? color : "transparent"} />
+          ),
         }}
       />
       <Tabs.Screen
         name="favorites"
         options={{
           title: "Favorites",
-          tabBarIcon: ({ color, size }) => <Heart size={size} color={color} />,
+          tabBarIcon: ({ focused, color, size }) => (
+            <Heart size={size} color={color} fill={focused ? color : "transparent"} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+          tabBarIcon: ({ focused, color, size }) => (
+            <User size={size} color={color} fill={focused ? color : "transparent"} />
+          ),
         }}
       />
     </Tabs>

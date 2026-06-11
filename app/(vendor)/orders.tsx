@@ -1,6 +1,7 @@
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, typography, spacing, radius, statusColors } from "@/lib/design-tokens";
+import { View, Text, TouchableOpacity } from "react-native";
+import { Screen, ScreenHeader, ScreenFlatList } from "@/components/ui/Screen";
+import { getStatusColor } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useMyStores } from "@/hooks/useStores";
@@ -11,7 +12,7 @@ import * as Haptics from "expo-haptics";
 import { Package } from "lucide-react-native";
 
 export default function VendorOrders() {
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const stores = useMyStores();
   const activeStore = stores?.[0];
   const orders = useQuery(api.orders.getByStore, activeStore ? { storeId: activeStore._id } : "skip" as any);
@@ -24,61 +25,57 @@ export default function VendorOrders() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.light.background }}>
-      <View style={{ paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border }}>
-        <Text style={{ fontSize: typography.h2.fontSize, fontWeight: typography.h2.fontWeight, color: colors.light.text }}>
-          Orders
-        </Text>
-      </View>
+    <Screen>
+      <ScreenHeader title="Orders" />
 
       {!orders ? (
-        <View style={{ padding: spacing.lg, gap: spacing.md }}>
+        <View className="p-4 gap-3">
           {[1, 2, 3].map((i) => <Skeleton key={i} height={120} />)}
         </View>
       ) : orders.length === 0 ? (
-        <EmptyState icon={<Package size={48} color={colors.light.textTertiary} />} title="No orders yet" message="Orders from customers will appear here." />
+        <EmptyState icon={<Package size={48} color={colors.mutedForeground} />} title="No orders yet" message="Orders from customers will appear here." />
       ) : (
-        <FlatList
+        <ScreenFlatList
           data={orders}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
+          contentContainerStyle={{ padding: 16 }}
           renderItem={({ item }) => {
-            const statusColor = statusColors[item.status] || statusColors.pending;
+            const statusColor = getStatusColor(item.status, colors);
             return (
-              <View style={{ backgroundColor: colors.light.background, borderRadius: radius.md, borderWidth: 1, borderColor: colors.light.border, padding: spacing.lg, marginBottom: spacing.md }}>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.sm }}>
-                  <Text style={{ fontSize: 12, fontWeight: "600", fontVariant: ["tabular-nums"] }}>{item.orderId}</Text>
-                  <View style={{ backgroundColor: statusColor.bg, paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: 9999 }}>
-                    <Text style={{ fontSize: 10, fontWeight: "700", color: statusColor.text, textTransform: "uppercase" }}>{item.status}</Text>
+              <View className="bg-card rounded-xl border border-border p-4 mb-3">
+                <View className="flex-row justify-between mb-2">
+                  <Text className="text-xs font-semibold text-foreground tabular-nums">{item.orderId}</Text>
+                  <View style={{ backgroundColor: statusColor.bg }} className="px-2 py-1 rounded-full">
+                    <Text style={{ color: statusColor.text }} className="text-[10px] font-bold uppercase">{item.status}</Text>
                   </View>
                 </View>
                 {item.items.slice(0, 3).map((i, idx) => (
-                  <Text key={idx} style={{ fontSize: 13, color: colors.light.text }}>{i.name} x{i.quantity}</Text>
+                  <Text key={idx} className="text-[13px] text-foreground">{i.name} x{i.quantity}</Text>
                 ))}
-                <Text style={{ fontSize: 13, fontWeight: "700", color: colors.light.text, marginTop: spacing.sm, fontVariant: ["tabular-nums"] }}>
+                <Text className="text-[13px] font-bold text-foreground mt-2 tabular-nums">
                   Total: {item.total.toLocaleString()} ETB
                 </Text>
 
                 {/* Actions */}
-                <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
+                <View className="flex-row gap-2 mt-3">
                   {item.status === "pending" && (
-                    <TouchableOpacity onPress={() => handleUpdate(item._id, "confirmed")} style={{ backgroundColor: colors.light.primary, borderRadius: radius.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, minHeight: 40, justifyContent: "center" }}>
-                      <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 12 }}>Approve</Text>
+                    <TouchableOpacity onPress={() => handleUpdate(item._id, "confirmed")} className="bg-primary rounded-lg px-4 py-2 min-h-[40px] justify-center">
+                      <Text className="text-primary-foreground font-bold text-xs">Approve</Text>
                     </TouchableOpacity>
                   )}
                   {item.status === "confirmed" && (
-                    <TouchableOpacity onPress={() => handleUpdate(item._id, "packed")} style={{ backgroundColor: colors.light.accent, borderRadius: radius.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, minHeight: 40, justifyContent: "center" }}>
-                      <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 12 }}>Mark Packed</Text>
+                    <TouchableOpacity onPress={() => handleUpdate(item._id, "packed")} className="bg-accent rounded-lg px-4 py-2 min-h-[40px] justify-center">
+                      <Text className="text-accent-foreground font-bold text-xs">Mark Packed</Text>
                     </TouchableOpacity>
                   )}
                   {item.status === "packed" && riders && riders.length > 0 && (
-                    <TouchableOpacity onPress={() => handleUpdate(item._id, "assigned", riders[0].userId)} style={{ backgroundColor: "#4F46E5", borderRadius: radius.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, minHeight: 40, justifyContent: "center" }}>
-                      <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 12 }}>Assign Rider</Text>
+                    <TouchableOpacity onPress={() => handleUpdate(item._id, "assigned", riders[0].userId)} className="bg-primary rounded-lg px-4 py-2 min-h-[40px] justify-center">
+                      <Text className="text-primary-foreground font-bold text-xs">Assign Rider</Text>
                     </TouchableOpacity>
                   )}
                   {item.status === "on_the_way" && (
-                    <TouchableOpacity onPress={() => handleUpdate(item._id, "delivered")} style={{ backgroundColor: colors.light.accent, borderRadius: radius.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, minHeight: 40, justifyContent: "center" }}>
-                      <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 12 }}>Mark Delivered</Text>
+                    <TouchableOpacity onPress={() => handleUpdate(item._id, "delivered")} className="bg-accent rounded-lg px-4 py-2 min-h-[40px] justify-center">
+                      <Text className="text-accent-foreground font-bold text-xs">Mark Delivered</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -87,6 +84,6 @@ export default function VendorOrders() {
           }}
         />
       )}
-    </View>
+    </Screen>
   );
 }

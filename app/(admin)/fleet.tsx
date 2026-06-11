@@ -1,47 +1,53 @@
-import { View, Text, FlatList } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, Text } from "react-native";
 import { Bike } from "lucide-react-native";
-import { colors, typography, spacing, radius } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Screen, ScreenHeader, ScreenFlatList } from "@/components/ui/Screen";
 
 export default function AdminFleet() {
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const riders = useQuery(api.riders.list);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.light.background }}>
-      <View style={{ paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border }}>
-        <Text style={{ fontSize: typography.h2.fontSize, fontWeight: typography.h2.fontWeight, color: colors.light.text }}>
-          Fleet
-        </Text>
-      </View>
+    <Screen>
+      <ScreenHeader title="Fleet" />
 
       {!riders ? (
-        <View style={{ padding: spacing.lg, gap: spacing.md }}>
+        <View className="gap-3 p-4">
           {[1, 2].map((i) => <Skeleton key={i} height={80} />)}
         </View>
       ) : (
-        <FlatList
+        <ScreenFlatList
           data={riders}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
+          contentContainerStyle={{ padding: 16 }}
           renderItem={({ item }) => (
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: spacing.lg, backgroundColor: colors.light.surface, borderRadius: radius.sm, marginBottom: spacing.xs }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-                <Bike size={24} color={colors.light.primary} />
+            <View className="mb-1 flex-row items-center justify-between rounded-lg bg-surface p-4">
+              <View className="flex-row items-center gap-3">
+                <Bike size={24} color={colors.primary} />
                 <View>
-                  <Text style={{ fontWeight: "700", fontSize: 13 }}>{item.vehicleType}</Text>
-                  <Text style={{ fontSize: 11, color: colors.light.textSecondary }}>Plate: {item.plateNumber}</Text>
+                  <Text className="font-['Montserrat_700Bold'] text-[13px] font-bold text-foreground">
+                    {item.vehicleType}
+                  </Text>
+                  <Text className="font-['Montserrat_500Medium'] text-[11px] text-muted-foreground">
+                    Plate: {item.plateNumber}
+                  </Text>
                 </View>
               </View>
-              <View style={{ alignItems: "flex-end" }}>
-                <Text style={{ fontWeight: "700", fontSize: 13, fontVariant: ["tabular-nums"] }}>
+              <View className="items-end">
+                <Text className="font-['Montserrat_700Bold'] text-[13px] font-bold text-foreground tabular-nums">
                   {item.totalEarnings.toLocaleString()} ETB
                 </Text>
-                <View style={{ backgroundColor: item.status === "idle" ? colors.light.accentLight : "#FEF3C7", paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: 9999, marginTop: spacing.xs }}>
-                  <Text style={{ fontSize: 10, fontWeight: "700", color: item.status === "idle" ? colors.light.accent : "#92400E" }}>
+                <View
+                  style={{ backgroundColor: item.status === "idle" ? colors.accentLight : colors.warningLight }}
+                  className="mt-1 rounded-full px-2 py-1"
+                >
+                  <Text
+                    style={{ color: item.status === "idle" ? colors.accent : colors.warning }}
+                    className="font-['Montserrat_700Bold'] text-[10px] font-bold"
+                  >
                     {item.status}
                   </Text>
                 </View>
@@ -50,6 +56,6 @@ export default function AdminFleet() {
           )}
         />
       )}
-    </View>
+    </Screen>
   );
 }

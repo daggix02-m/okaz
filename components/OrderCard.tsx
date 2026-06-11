@@ -1,6 +1,7 @@
 import { View, Text } from "react-native";
 import { Check, Clock, Package, Bike, MapPin } from "lucide-react-native";
-import { colors, spacing, statusColors } from "@/lib/design-tokens";
+import { getStatusColor } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 import { Doc } from "@/convex/_generated/dataModel";
 
 type Order = Doc<"orders">;
@@ -16,108 +17,82 @@ const STEP_LABELS: Record<string, string> = {
 };
 
 export function OrderCard({ order }: { order: Order }) {
+  const { colors } = useTheme();
   const currentIdx = STEPS.indexOf(order.status);
-  const statusColor = statusColors[order.status] || statusColors.pending;
+  const statusColor = getStatusColor(order.status, colors);
 
   return (
-    <View
-      style={{
-        backgroundColor: colors.light.background,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: colors.light.border,
-        padding: spacing.lg,
-        marginBottom: spacing.md,
-      }}
-    >
+    <View className="bg-card rounded-xl border border-border p-4 mb-3">
       {/* Header */}
-      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.md }}>
-        <Text style={{ fontSize: 12, fontWeight: "600", color: colors.light.textSecondary, fontVariant: ["tabular-nums"] }}>
+      <View className="flex-row justify-between mb-3">
+        <Text className="text-[12px] font-semibold text-muted-foreground tabular-nums">
           {order.orderId}
         </Text>
         <View
-          style={{
-            backgroundColor: statusColor.bg,
-            paddingHorizontal: spacing.md,
-            paddingVertical: spacing.xs,
-            borderRadius: 9999,
-          }}
+          style={{ backgroundColor: statusColor.bg }}
+          className="px-3 py-1 rounded-full"
         >
-          <Text style={{ fontSize: 10, fontWeight: "700", color: statusColor.text, textTransform: "uppercase" }}>
+          <Text
+            style={{ color: statusColor.text }}
+            className="text-[10px] font-bold uppercase"
+          >
             {STEP_LABELS[order.status]}
           </Text>
         </View>
       </View>
 
       {/* Items */}
-      <View style={{ gap: spacing.xs, marginBottom: spacing.md }}>
+      <View className="gap-1 mb-3">
         {order.items.slice(0, 3).map((item, i) => (
-          <View key={i} style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 13, color: colors.light.text }} numberOfLines={1}>
+          <View key={i} className="flex-row justify-between">
+            <Text className="text-[13px] text-foreground" numberOfLines={1}>
               {item.name}
             </Text>
-            <Text style={{ fontSize: 12, color: colors.light.textSecondary }}>
+            <Text className="text-[12px] text-muted-foreground">
               x{item.quantity}
             </Text>
           </View>
         ))}
         {order.items.length > 3 && (
-          <Text style={{ fontSize: 11, color: colors.light.textTertiary }}>
+          <Text className="text-[11px] text-muted-foreground">
             +{order.items.length - 3} more items
           </Text>
         )}
       </View>
 
       {/* Total */}
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          paddingTop: spacing.md,
-          borderTopWidth: 1,
-          borderTopColor: colors.light.border,
-        }}
-      >
-        <Text style={{ fontSize: 13, fontWeight: "600", color: colors.light.text }}>
-          {order.storeName ?? "Store"}
+      <View className="flex-row justify-between pt-3 border-t border-border">
+        <Text className="text-[13px] font-semibold text-foreground">
+          Store
         </Text>
-        <Text style={{ fontSize: 14, fontWeight: "700", color: colors.light.text, fontVariant: ["tabular-nums"] }}>
+        <Text className="text-[14px] font-bold text-foreground tabular-nums">
           {order.total.toLocaleString()} ETB
         </Text>
       </View>
 
       {/* Progress */}
-      <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: spacing.md, paddingHorizontal: spacing.xs }}>
+      <View className="flex-row justify-between mt-3 px-1">
         {STEPS.map((step, idx) => {
           const done = idx <= currentIdx;
           const active = step === order.status;
+          const stepColor = getStatusColor(step, colors);
           return (
-            <View key={step} style={{ alignItems: "center", flex: 1 }}>
+            <View key={step} className="items-center flex-1">
               <View
                 style={{
-                  width: active ? 22 : 18,
-                  height: active ? 22 : 18,
-                  borderRadius: 11,
-                  backgroundColor: done ? colors.light.accent : colors.light.surface,
-                  borderWidth: done ? 0 : 1,
-                  borderColor: colors.light.border,
-                  justifyContent: "center",
-                  alignItems: "center",
+                  backgroundColor: done ? stepColor.bg : colors.surface,
                 }}
+                className={`w-5 h-5 rounded-full items-center justify-center ${done ? 'border-0' : 'border border-border'}`}
               >
                 {done ? (
-                  <Check size={12} color="#FFFFFF" />
+                  <Check size={12} color={stepColor.text} />
                 ) : (
-                  <Text style={{ fontSize: 9, color: colors.light.textTertiary }}>{idx + 1}</Text>
+                  <Text className="text-[9px] text-muted-foreground">{idx + 1}</Text>
                 )}
               </View>
               <Text
-                style={{
-                  fontSize: 8,
-                  marginTop: 4,
-                  color: active ? colors.light.primary : colors.light.textTertiary,
-                  fontWeight: active ? "700" : "500",
-                }}
+                style={{ color: active ? colors.primary : colors.mutedForeground }}
+                className={`text-[8px] mt-1 ${active ? 'font-bold' : 'font-medium'}`}
               >
                 {STEP_LABELS[step]}
               </Text>
@@ -128,19 +103,9 @@ export function OrderCard({ order }: { order: Order }) {
 
       {/* Rider info */}
       {order.riderId && (
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: spacing.sm,
-            padding: spacing.md,
-            backgroundColor: colors.light.surface,
-            borderRadius: 8,
-            marginTop: spacing.md,
-          }}
-        >
-          <Bike size={16} color={colors.light.primary} />
-          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.light.text }}>
+        <View className="flex-row items-center gap-2 p-3 bg-surface rounded-lg mt-3">
+          <Bike size={16} color={colors.primary} />
+          <Text className="text-[12px] font-semibold text-foreground">
             Delivery agent assigned
           </Text>
         </View>

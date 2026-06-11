@@ -1,7 +1,7 @@
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, Text, TouchableOpacity } from "react-native";
+import { Screen, ScreenHeader, ScreenFlatList } from "@/components/ui/Screen";
 import { Bike, MapPin } from "lucide-react-native";
-import { colors, typography, spacing, radius } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useCurrentUser } from "@/hooks/useAuth";
@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import * as Haptics from "expo-haptics";
 
 export default function DeliveryJobs() {
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const { user } = useCurrentUser();
   const pendingOrders = useQuery(api.orders.getPending);
   const riderOrders = useQuery(api.orders.getByRider);
@@ -39,60 +39,58 @@ export default function DeliveryJobs() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.light.background }}>
-      <View style={{ paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border }}>
-        <Text style={{ fontSize: typography.h2.fontSize, fontWeight: typography.h2.fontWeight, color: colors.light.text }}>
-          Delivery Jobs
-        </Text>
-        {currentRider && (
-          <Text style={{ fontSize: typography.caption.fontSize, color: colors.light.textSecondary, marginTop: spacing.xs }}>
-            {currentRider.vehicleType} · {currentRider.plateNumber}
-          </Text>
-        )}
-      </View>
+    <Screen>
+      <ScreenHeader
+        title="Delivery Jobs"
+        subtitle={
+          currentRider
+            ? `${currentRider.vehicleType} · ${currentRider.plateNumber}`
+            : undefined
+        }
+      />
 
       {!pendingOrders ? (
-        <View style={{ padding: spacing.lg, gap: spacing.md }}>
+        <View className="p-4 gap-3">
           {[1, 2].map((i) => <Skeleton key={i} height={140} />)}
         </View>
       ) : allJobs.length === 0 ? (
-        <EmptyState icon={<Bike size={48} color={colors.light.textTertiary} />} title="No jobs available" message="Orders needing delivery will appear here." />
+        <EmptyState icon={<Bike size={48} color={colors.mutedForeground} />} title="No jobs available" message="Orders needing delivery will appear here." />
       ) : (
-        <FlatList
+        <ScreenFlatList
           data={allJobs}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
+          contentContainerStyle={{ padding: 16 }}
           renderItem={({ item }) => (
-            <View style={{ backgroundColor: colors.light.background, borderRadius: radius.md, borderWidth: 1, borderColor: colors.light.border, padding: spacing.lg, marginBottom: spacing.md }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.sm }}>
-                <Text style={{ fontWeight: "700", fontSize: 13 }}>{item.orderId}</Text>
-                <View style={{ backgroundColor: "#FEF3C7", paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: 9999 }}>
-                  <Text style={{ fontSize: 10, fontWeight: "700", color: "#92400E" }}>{item.deliveryFee} ETB</Text>
+            <View className="bg-card rounded-xl border border-border p-4 mb-3">
+              <View className="flex-row justify-between mb-2">
+                <Text className="font-bold text-[13px] text-foreground">{item.orderId}</Text>
+                <View className="bg-warning-light px-2 py-1 rounded-full">
+                  <Text className="text-[10px] font-bold text-warning">{item.deliveryFee} ETB</Text>
                 </View>
               </View>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.xs }}>
-                <MapPin size={14} color={colors.light.accent} />
-                <Text style={{ fontSize: 12, color: colors.light.textSecondary }} numberOfLines={1}>Pickup: {item.storeName ?? "Store"}</Text>
+              <View className="flex-row items-center gap-2 mb-1">
+                <MapPin size={14} color={colors.accent} />
+                <Text className="text-xs text-muted-foreground" numberOfLines={1}>Pickup: Store</Text>
               </View>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.sm }}>
-                <MapPin size={14} color={colors.light.destructive} />
-                <Text style={{ fontSize: 12, color: colors.light.textSecondary }} numberOfLines={1}>Drop: {item.deliveryAddress}</Text>
+              <View className="flex-row items-center gap-2 mb-2">
+                <MapPin size={14} color={colors.destructive} />
+                <Text className="text-xs text-muted-foreground" numberOfLines={1}>Drop: {item.deliveryAddress}</Text>
               </View>
 
-              <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm }}>
+              <View className="flex-row gap-2 mt-2">
                 {item.status === "packed" && !item.riderId && (
-                  <TouchableOpacity onPress={() => handleAcceptJob(item._id)} style={{ backgroundColor: "#D97706", borderRadius: radius.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, minHeight: 40, justifyContent: "center" }} accessibilityLabel="Accept delivery job">
-                    <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 12 }}>Accept Job</Text>
+                  <TouchableOpacity onPress={() => handleAcceptJob(item._id)} className="bg-warning rounded-lg px-4 py-2 min-h-[40px] justify-center" accessibilityLabel="Accept delivery job">
+                    <Text className="text-warning-foreground font-bold text-xs">Accept Job</Text>
                   </TouchableOpacity>
                 )}
                 {item.status === "assigned" && (
-                  <TouchableOpacity onPress={() => handleAction(item._id, "on_the_way")} style={{ backgroundColor: colors.light.primary, borderRadius: radius.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, minHeight: 40, justifyContent: "center" }} accessibilityLabel="Mark picked up">
-                    <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 12 }}>Pick Up</Text>
+                  <TouchableOpacity onPress={() => handleAction(item._id, "on_the_way")} className="bg-primary rounded-lg px-4 py-2 min-h-[40px] justify-center" accessibilityLabel="Mark picked up">
+                    <Text className="text-primary-foreground font-bold text-xs">Pick Up</Text>
                   </TouchableOpacity>
                 )}
                 {item.status === "on_the_way" && (
-                  <TouchableOpacity onPress={() => handleAction(item._id, "delivered")} style={{ backgroundColor: colors.light.accent, borderRadius: radius.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, minHeight: 40, justifyContent: "center" }} accessibilityLabel="Mark delivered">
-                    <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 12 }}>Delivered</Text>
+                  <TouchableOpacity onPress={() => handleAction(item._id, "delivered")} className="bg-accent rounded-lg px-4 py-2 min-h-[40px] justify-center" accessibilityLabel="Mark delivered">
+                    <Text className="text-accent-foreground font-bold text-xs">Delivered</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -100,6 +98,6 @@ export default function DeliveryJobs() {
           )}
         />
       )}
-    </View>
+    </Screen>
   );
 }

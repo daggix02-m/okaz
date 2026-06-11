@@ -2,17 +2,19 @@ import { Tabs, Redirect } from "expo-router";
 import { useCurrentUser } from "@/hooks/useAuth";
 import { View, ActivityIndicator } from "react-native";
 import { Store, Users, TrendingUp, Layers } from "lucide-react-native";
-import { colors } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getTabBarScreenOptions } from "@/lib/tab-bar-options";
 
 export default function AdminLayout() {
   const { isLoading, isAuthenticated, user } = useCurrentUser();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.light.background }}>
-        <ActivityIndicator size="large" color={colors.light.primary} />
+      <View className="flex-1 justify-center items-center bg-background">
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -21,25 +23,11 @@ export default function AdminLayout() {
   if (user?.role !== "admin") return <Redirect href="/" />;
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#DC2626",
-        tabBarInactiveTintColor: colors.light.textTertiary,
-        tabBarStyle: {
-          backgroundColor: colors.light.background,
-          borderTopColor: colors.light.border,
-          height: 56 + insets.bottom,
-          paddingBottom: insets.bottom,
-          paddingTop: 4,
-        },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: "Approvals", tabBarIcon: ({ color, size }) => <Store size={size} color={color} /> }} />
-      <Tabs.Screen name="fleet" options={{ title: "Fleet", tabBarIcon: ({ color, size }) => <Users size={size} color={color} /> }} />
-      <Tabs.Screen name="revenue" options={{ title: "Revenue", tabBarIcon: ({ color, size }) => <TrendingUp size={size} color={color} /> }} />
-      <Tabs.Screen name="content" options={{ title: "Content", tabBarIcon: ({ color, size }) => <Layers size={size} color={color} /> }} />
+    <Tabs screenOptions={getTabBarScreenOptions(colors, insets)}>
+      <Tabs.Screen name="index" options={{ title: "Approvals", tabBarIcon: ({ focused, color, size }) => <Store size={size} color={color} fill={focused ? color : "transparent"} /> }} />
+      <Tabs.Screen name="fleet" options={{ title: "Fleet", tabBarIcon: ({ focused, color, size }) => <Users size={size} color={color} /> }} />
+      <Tabs.Screen name="revenue" options={{ title: "Revenue", tabBarIcon: ({ focused, color, size }) => <TrendingUp size={size} color={color} /> }} />
+      <Tabs.Screen name="content" options={{ title: "Content", tabBarIcon: ({ focused, color, size }) => <Layers size={size} color={color} /> }} />
     </Tabs>
   );
 }

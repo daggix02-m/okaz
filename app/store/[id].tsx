@@ -1,91 +1,108 @@
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Stack, useLocalSearchParams, router } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Star, MapPin, ArrowLeft } from "lucide-react-native";
-import { colors, typography, spacing, radius } from "@/lib/design-tokens";
+import { Screen, ScreenFlatList } from "@/components/ui/Screen";
+import { Star, MapPin, ArrowLeft, Heart } from "lucide-react-native";
+import { useTheme } from "@/hooks/useTheme";
 import { useStore } from "@/hooks/useStores";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useGuestStore } from "@/stores/guest.store";
 import { ProductCard } from "@/components/ProductCard";
 import { Skeleton } from "@/components/ui/Skeleton";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
+import { getStoreImage } from "@/lib/image-helper";
 
 export default function StoreDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const store = useStore(id);
   const products = useQuery(api.products.list, { storeId: id as any });
   const toggleFav = useMutation(api.favorites.toggleStoreFavorite);
+  const isGuest = useGuestStore((s) => s.isGuest);
+  const storeFavIds = useQuery(api.favorites.getStoreFavorites, isGuest ? "skip" : {});
+  const isFavorited = storeFavIds?.includes(id as any) ?? false;
 
   if (!store) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.light.background }}>
+      <View className="flex-1 justify-center items-center bg-background">
         <Skeleton height={200} width={300} />
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.light.background }}>
+    <Screen>
       <Stack.Screen
         options={{
           headerTitle: store.name,
           headerLeft: () => (
             <TouchableOpacity
               onPress={() => router.back()}
-              style={{ padding: spacing.sm, marginLeft: -spacing.sm }}
+              className="-ml-2"
+              style={{ padding: 8 }}
               accessibilityLabel="Go back"
             >
-              <ArrowLeft size={22} color={colors.light.text} />
+              <ArrowLeft size={22} color={colors.foreground} />
             </TouchableOpacity>
           ),
         }}
       />
 
-      <FlatList
+      <ScreenFlatList
         data={products ?? []}
         keyExtractor={(item) => item._id}
         numColumns={2}
-        contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
-        columnWrapperStyle={{ gap: spacing.md }}
+        withTabBar={false}
+        contentContainerStyle={{ padding: 16 }}
+        columnWrapperStyle={{ gap: 12 }}
         ListHeaderComponent={
-          <View style={{ marginBottom: spacing.xl }}>
+          <View className="mb-6">
             {/* Store Header */}
-            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.lg }}>
-              <View style={{ width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.light.surface, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: colors.light.border }}>
-                <Text style={{ fontSize: 32 }}>🏬</Text>
+            <View className="flex-row items-center gap-3 mb-4">
+              <View className="w-16 h-16 rounded-xl bg-surface overflow-hidden border border-border">
+                <Image
+                  source={{ uri: getStoreImage(store.name, store.category) }}
+                  className="w-full h-full"
+                  contentFit="cover"
+                />
               </View>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-                  <Star size={14} color="#F59E0B" fill="#F59E0B" />
-                  <Text style={{ fontWeight: "600", fontSize: 13 }}>{store.rating}</Text>
-                  <Text style={{ color: colors.light.textTertiary, fontSize: 11 }}>
+              <View className="flex-1">
+                <View className="flex-row items-center gap-2">
+                  <Star size={12} color={colors.chart4} fill={colors.chart4} />
+                  <Text className="font-semibold text-[11px] text-foreground">{store.rating}</Text>
+                  <Text className="text-[10px] text-muted-foreground">
                     ({store.reviewCount} reviews)
                   </Text>
                 </View>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.xs, marginTop: spacing.xs }}>
-                  <MapPin size={12} color={colors.light.textSecondary} />
-                  <Text style={{ fontSize: 12, color: colors.light.textSecondary }}>{store.locationName}</Text>
+                <View className="flex-row items-center gap-1 mt-1">
+                  <MapPin size={12} color={colors.mutedForeground} />
+                  <Text className="text-xs text-muted-foreground">{store.locationName}</Text>
                 </View>
                 {store.isSponsored && (
-                  <View style={{ marginTop: spacing.xs, backgroundColor: "#FEF3C7", paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: 4, alignSelf: "flex-start" }}>
-                    <Text style={{ fontSize: 9, fontWeight: "700", color: "#92400E" }}>Sponsored</Text>
+                  <View className="mt-1 bg-warning-light px-2 py-0.5 rounded self-start">
+                    <Text className="text-[9px] font-bold text-warning">Sponsored</Text>
                   </View>
                 )}
               </View>
               <TouchableOpacity
                 onPress={() => {
+                  if (isGuest) {
+                    router.push("/(auth)/sign-in");
+                    return;
+                  }
                   toggleFav({ storeId: store._id });
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 }}
-                style={{ padding: spacing.sm, minWidth: 48, minHeight: 48, justifyContent: "center", alignItems: "center" }}
+                className="justify-center items-center min-w-[48px] min-h-[48px]"
+                style={{ padding: 8 }}
                 accessibilityLabel="Toggle store favorite"
               >
-                <Star size={22} color={colors.light.primary} />
+                <Heart size={22} color={isFavorited ? colors.primary : colors.mutedForeground} fill={isFavorited ? colors.primary : "transparent"} />
               </TouchableOpacity>
             </View>
 
-            <Text style={{ fontWeight: "700", fontSize: 13, color: colors.light.text, textTransform: "uppercase", letterSpacing: 1, marginBottom: spacing.md }}>
+            <Text className="font-bold text-xs text-foreground uppercase tracking-[1px] mb-3">
               Products
             </Text>
           </View>
@@ -96,11 +113,11 @@ export default function StoreDetail() {
           </View>
         )}
         ListEmptyComponent={
-          <View style={{ padding: spacing.xl, alignItems: "center" }}>
-            <Text style={{ color: colors.light.textSecondary }}>No products listed yet</Text>
+          <View className="p-6 items-center">
+            <Text className="text-muted-foreground">No products listed yet</Text>
           </View>
         }
       />
-    </View>
+    </Screen>
   );
 }

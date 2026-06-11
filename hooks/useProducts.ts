@@ -1,7 +1,8 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 
-export function useProducts(args?: { category?: string; storeId?: string; featured?: boolean }) {
+export function useProducts(args?: { category?: string; storeId?: Id<"stores">; featured?: boolean }) {
   return useQuery(api.products.list, args ?? {});
 }
 

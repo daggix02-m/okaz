@@ -1,13 +1,13 @@
-import { View, Text, ScrollView } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TrendingUp, DollarSign, Package, Percent } from "lucide-react-native";
-import { colors, typography, spacing, radius } from "@/lib/design-tokens";
+import { View, Text } from "react-native";
+import { Package, Percent, Store, Users } from "lucide-react-native";
+import { useTheme } from "@/hooks/useTheme";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Screen, ScreenHeader, ScreenScrollView } from "@/components/ui/Screen";
 
 export default function AdminRevenue() {
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const stores = useQuery(api.stores.listApproved);
   const riders = useQuery(api.riders.list);
 
@@ -15,59 +15,70 @@ export default function AdminRevenue() {
   const totalStores = stores?.length ?? 0;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.light.background }}>
-      <View style={{ paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border }}>
-        <Text style={{ fontSize: typography.h2.fontSize, fontWeight: typography.h2.fontWeight, color: colors.light.text }}>
-          Revenue
-        </Text>
-      </View>
-
-      <View style={{ padding: spacing.lg, gap: spacing.xl }}>
-        {!stores ? (
-          <Skeleton height={120} />
-        ) : (
-          <>
-            <View style={{ flexDirection: "row", gap: spacing.md }}>
-              <View style={{ flex: 1, backgroundColor: colors.light.surface, borderRadius: radius.md, padding: spacing.lg, alignItems: "center" }}>
-                <Store size={20} color={colors.light.primary} />
-                <Text style={{ fontSize: 20, fontWeight: "700", marginTop: spacing.sm, fontVariant: ["tabular-nums"] }}>{totalStores}</Text>
-                <Text style={{ fontSize: 10, color: colors.light.textSecondary }}>Stores</Text>
-              </View>
-              <View style={{ flex: 1, backgroundColor: colors.light.surface, borderRadius: radius.md, padding: spacing.lg, alignItems: "center" }}>
-                <Package size={20} color={colors.light.accent} />
-                <Text style={{ fontSize: 20, fontWeight: "700", marginTop: spacing.sm, fontVariant: ["tabular-nums"] }}>{totalSales}</Text>
-                <Text style={{ fontSize: 10, color: colors.light.textSecondary }}>Total Sales</Text>
-              </View>
-            </View>
-
-            <View style={{ flexDirection: "row", gap: spacing.md }}>
-              <View style={{ flex: 1, backgroundColor: colors.light.surface, borderRadius: radius.md, padding: spacing.lg, alignItems: "center" }}>
-                <Users size={20} color="#D97706" />
-                <Text style={{ fontSize: 20, fontWeight: "700", marginTop: spacing.sm, fontVariant: ["tabular-nums"] }}>{riders?.length ?? 0}</Text>
-                <Text style={{ fontSize: 10, color: colors.light.textSecondary }}>Riders</Text>
-              </View>
-              <View style={{ flex: 1, backgroundColor: colors.light.surface, borderRadius: radius.md, padding: spacing.lg, alignItems: "center" }}>
-                <Percent size={20} color="#DC2626" />
-                <Text style={{ fontSize: 20, fontWeight: "700", marginTop: spacing.sm }}>12%</Text>
-                <Text style={{ fontSize: 10, color: colors.light.textSecondary }}>Commission</Text>
-              </View>
-            </View>
-
-            <View style={{ backgroundColor: colors.light.surface, borderRadius: radius.md, padding: spacing.lg }}>
-              <Text style={{ fontWeight: "700", fontSize: 13, marginBottom: spacing.md }}>Top Stores by Sales</Text>
-              {stores.slice(0, 5).map((s, i) => (
-                <View key={s._id} style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.light.borderLight }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-                    <Text style={{ fontWeight: "700", color: colors.light.textTertiary, minWidth: 20 }}>{i + 1}</Text>
-                    <Text style={{ fontSize: 13, fontWeight: "600" }} numberOfLines={1}>{s.name}</Text>
-                  </View>
-                  <Text style={{ fontSize: 13, fontWeight: "700", fontVariant: ["tabular-nums"] }}>{s.salesVolume}</Text>
+    <Screen>
+      <ScreenHeader title="Revenue" />
+      <ScreenScrollView contentContainerStyle={{ padding: 16 }}>
+        <View className="gap-6">
+          {!stores ? (
+            <Skeleton height={120} />
+          ) : (
+            <>
+              <View className="flex-row gap-3">
+                <View className="flex-1 items-center rounded-xl bg-surface p-4">
+                  <Store size={20} color={colors.primary} />
+                  <Text className="mt-2 font-['Montserrat_700Bold'] text-xl font-bold text-foreground tabular-nums">
+                    {totalStores}
+                  </Text>
+                  <Text className="font-['Montserrat_500Medium'] text-[10px] text-muted-foreground">Stores</Text>
                 </View>
-              ))}
-            </View>
-          </>
-        )}
-      </View>
-    </ScrollView>
+                <View className="flex-1 items-center rounded-xl bg-surface p-4">
+                  <Package size={20} color={colors.accent} />
+                  <Text className="mt-2 font-['Montserrat_700Bold'] text-xl font-bold text-foreground tabular-nums">
+                    {totalSales}
+                  </Text>
+                  <Text className="font-['Montserrat_500Medium'] text-[10px] text-muted-foreground">Total Sales</Text>
+                </View>
+              </View>
+
+              <View className="flex-row gap-3">
+                <View className="flex-1 items-center rounded-xl bg-surface p-4">
+                  <Users size={20} color={colors.chart4} />
+                  <Text className="mt-2 font-['Montserrat_700Bold'] text-xl font-bold text-foreground tabular-nums">
+                    {riders?.length ?? 0}
+                  </Text>
+                  <Text className="font-['Montserrat_500Medium'] text-[10px] text-muted-foreground">Riders</Text>
+                </View>
+                <View className="flex-1 items-center rounded-xl bg-surface p-4">
+                  <Percent size={20} color={colors.destructive} />
+                  <Text className="mt-2 font-['Montserrat_700Bold'] text-xl font-bold text-foreground">12%</Text>
+                  <Text className="font-['Montserrat_500Medium'] text-[10px] text-muted-foreground">Commission</Text>
+                </View>
+              </View>
+
+              <View className="rounded-xl bg-surface p-4">
+                <Text className="mb-3 font-['Montserrat_700Bold'] text-[13px] font-bold text-foreground">
+                  Top Stores by Sales
+                </Text>
+                {stores.slice(0, 5).map((s, i) => (
+                  <View key={s._id} className="flex-row justify-between border-b border-border py-2">
+                    <View className="flex-row items-center gap-2">
+                      <Text className="min-w-5 font-['Montserrat_700Bold'] font-bold text-muted-foreground">
+                        {i + 1}
+                      </Text>
+                      <Text className="font-['Montserrat_500Medium'] text-[13px] font-medium text-foreground" numberOfLines={1}>
+                        {s.name}
+                      </Text>
+                    </View>
+                    <Text className="font-['Montserrat_700Bold'] font-mono text-[13px] font-bold text-foreground">
+                      {s.salesVolume}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+        </View>
+      </ScreenScrollView>
+    </Screen>
   );
 }

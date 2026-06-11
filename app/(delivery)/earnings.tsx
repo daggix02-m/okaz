@@ -1,58 +1,49 @@
-import { View, Text, ScrollView } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { DollarSign, TrendingUp } from "lucide-react-native";
-import { colors, typography, spacing, radius } from "@/lib/design-tokens";
+import { View, Text } from "react-native";
+import { Banknote, TrendingUp } from "lucide-react-native";
+import { useTheme } from "@/hooks/useTheme";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Screen, ScreenHeader, ScreenScrollView } from "@/components/ui/Screen";
 
 export default function DeliveryEarnings() {
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const rider = useQuery(api.riders.getCurrentRider);
   const orders = useQuery(api.orders.getByRider);
   const completedOrders = orders?.filter((o) => o.status === "delivered") ?? [];
   const todayEarnings = completedOrders.reduce((sum, o) => sum + o.deliveryFee, 0);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.light.background }}>
-      <View style={{ paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border }}>
-        <Text style={{ fontSize: typography.h2.fontSize, fontWeight: typography.h2.fontWeight, color: colors.light.text }}>
-          Earnings
-        </Text>
-      </View>
-
-      <View style={{ padding: spacing.lg, gap: spacing.xl }}>
-        {/* Earnings Cards */}
-        {rider ? (
-          <>
-            <View style={{ backgroundColor: colors.light.accentLight, borderRadius: radius.md, padding: spacing.xl, alignItems: "center" }}>
-              <DollarSign size={24} color={colors.light.accent} />
-              <Text style={{ fontSize: 28, fontWeight: "700", color: colors.light.text, marginTop: spacing.sm, fontVariant: ["tabular-nums"] }}>
-                {rider.totalEarnings.toLocaleString()} ETB
-              </Text>
-              <Text style={{ fontSize: 12, color: colors.light.textSecondary }}>Total Earnings</Text>
-            </View>
-
-            <View style={{ flexDirection: "row", gap: spacing.md }}>
-              <View style={{ flex: 1, backgroundColor: colors.light.surface, borderRadius: radius.md, padding: spacing.lg, alignItems: "center" }}>
-                <Text style={{ fontSize: 20, fontWeight: "700", fontVariant: ["tabular-nums"] }}>{todayEarnings.toLocaleString()}</Text>
-                <Text style={{ fontSize: 10, color: colors.light.textSecondary }}>Today</Text>
+    <Screen>
+      <ScreenHeader title="Earnings" />
+      <ScreenScrollView contentContainerStyle={{ padding: 16 }}>
+        <View className="gap-6">
+          {rider ? (
+            <>
+              <View className="items-center rounded-xl bg-accent-light p-6">
+                <Banknote size={24} color={colors.accent} />
+                <Text className="mt-2 font-['Montserrat_700Bold'] text-3xl font-bold text-foreground tabular-nums">
+                  {rider.totalEarnings.toLocaleString()} ETB
+                </Text>
+                <Text className="font-['Montserrat_500Medium'] text-caption text-muted-foreground">
+                  Total Earnings
+                </Text>
               </View>
-              <View style={{ flex: 1, backgroundColor: colors.light.surface, borderRadius: radius.md, padding: spacing.lg, alignItems: "center" }}>
-                <Text style={{ fontSize: 20, fontWeight: "700", fontVariant: ["tabular-nums"] }}>{completedOrders.length}</Text>
-                <Text style={{ fontSize: 10, color: colors.light.textSecondary }}>Delivered</Text>
+              <View className="items-center rounded-xl bg-surface p-6">
+                <TrendingUp size={24} color={colors.primary} />
+                <Text className="mt-2 font-['Montserrat_700Bold'] text-2xl font-bold text-foreground tabular-nums">
+                  {todayEarnings.toLocaleString()} ETB
+                </Text>
+                <Text className="font-['Montserrat_500Medium'] text-caption text-muted-foreground">
+                  From {completedOrders.length} completed deliveries
+                </Text>
               </View>
-            </View>
-
-            <View style={{ backgroundColor: colors.light.surface, borderRadius: radius.md, padding: spacing.lg }}>
-              <Text style={{ fontWeight: "700", marginBottom: spacing.md }}>Rating</Text>
-              <Text style={{ fontSize: 24, fontWeight: "700", color: "#F59E0B" }}>{rider.rating} / 5.0</Text>
-            </View>
-          </>
-        ) : (
-          <Skeleton height={160} />
-        )}
-      </View>
-    </ScrollView>
+            </>
+          ) : (
+            <Skeleton height={120} />
+          )}
+        </View>
+      </ScreenScrollView>
+    </Screen>
   );
 }

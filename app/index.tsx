@@ -1,17 +1,22 @@
 import { Redirect } from "expo-router";
-import { View, ActivityIndicator, Text } from "react-native";
+import { View, ActivityIndicator } from "react-native";
 import { useCurrentUser } from "@/hooks/useAuth";
-import { colors, typography } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 
 export default function Index() {
-  const { isLoading, isAuthenticated, user } = useCurrentUser();
+  const { isLoading, isAuthenticated, isGuest, user } = useCurrentUser();
+  const { colors } = useTheme();
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.light.background }}>
-        <ActivityIndicator size="large" color={colors.light.primary} />
+      <View className="flex-1 justify-center items-center" style={{ backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
+  }
+
+  if (isGuest) {
+    return <Redirect href="/(customer)" />;
   }
 
   if (!isAuthenticated) {

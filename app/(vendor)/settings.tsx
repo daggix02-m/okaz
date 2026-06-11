@@ -1,14 +1,14 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { LogOut, Sliders } from "lucide-react-native";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useMyStores } from "@/hooks/useStores";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { colors, typography, spacing, radius } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
+import { Screen, ScreenHeader, ScreenScrollView } from "@/components/ui/Screen";
 
 export default function VendorSettings() {
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const { signOut } = useAuthActions();
   const stores = useMyStores();
   const activeStore = stores?.[0];
@@ -23,82 +23,65 @@ export default function VendorSettings() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.light.background }}>
-      <View style={{ paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border }}>
-        <Text style={{ fontSize: typography.h2.fontSize, fontWeight: typography.h2.fontWeight, color: colors.light.text }}>
-          Settings
-        </Text>
-      </View>
+    <Screen>
+      <ScreenHeader title="Settings" />
+      <ScreenScrollView contentContainerStyle={{ padding: 16 }}>
+        <View className="gap-6">
+          {activeStore && (
+            <View className="rounded-xl bg-surface p-4">
+              <View className="mb-3 flex-row items-center gap-2">
+                <Sliders size={20} color={colors.primary} />
+                <Text className="font-['Montserrat_700Bold'] text-body font-bold text-foreground">
+                  Subscription
+                </Text>
+              </View>
+              <Text className="font-['Montserrat_500Medium'] text-caption text-muted-foreground">
+                Month {activeStore.subscriptionMonth} ·{" "}
+                {activeStore.subscriptionActive ? "Active" : "Suspended"}
+              </Text>
+              <Text className="mt-2 font-['Montserrat_500Medium'] text-caption text-muted-foreground">
+                Monthly fee: 100 ETB
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  paySubscription({ storeId: activeStore._id });
+                  Alert.alert("Success", "Subscription paid!");
+                }}
+                className="mt-3 min-h-[48px] items-center justify-center rounded-lg bg-primary p-3"
+                accessibilityLabel="Pay subscription"
+              >
+                <Text className="font-['Montserrat_700Bold'] font-bold text-primary-foreground">
+                  Pay Monthly Fee (100 ETB)
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  requestSponsorship({ storeId: activeStore._id });
+                  Alert.alert("Success", "Sponsorship activated!");
+                }}
+                className="mt-2 min-h-[48px] items-center justify-center rounded-lg bg-warning p-3"
+                accessibilityLabel="Request sponsorship"
+              >
+                <Text className="font-['Montserrat_700Bold'] font-bold text-warning-foreground">
+                  Request Sponsorship (150 ETB)
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
-      <View style={{ padding: spacing.lg, gap: spacing.xl }}>
-        {/* Subscription */}
-        {activeStore && (
-          <View style={{ backgroundColor: colors.light.surface, borderRadius: radius.md, padding: spacing.lg }}>
-            <Text style={{ fontWeight: "700", fontSize: 14, marginBottom: spacing.sm }}>Store Subscription</Text>
-            <Text style={{ fontSize: 12, color: colors.light.textSecondary, marginBottom: spacing.md }}>
-              Month {activeStore.subscriptionMonth} · {activeStore.subscriptionActive ? "Active" : "Suspended"}
+          <TouchableOpacity
+            onPress={handleLogout}
+            className="min-h-[48px] flex-row items-center justify-center rounded-lg p-3"
+            style={{ backgroundColor: colors.destructiveLight }}
+            accessibilityLabel="Logout"
+          >
+            <LogOut size={18} color={colors.destructive} />
+            <Text className="ml-2 font-['Montserrat_700Bold'] font-bold text-destructive">
+              Logout
             </Text>
-            <Text style={{ fontSize: 12, color: colors.light.textSecondary, marginBottom: spacing.md }}>
-              Monthly fee: 100 ETB
-            </Text>
-            <TouchableOpacity
-              onPress={() => {
-                paySubscription({ storeId: activeStore._id });
-                Alert.alert("Success", "Subscription paid!");
-              }}
-              style={{
-                backgroundColor: colors.light.primary,
-                borderRadius: radius.sm,
-                padding: spacing.md,
-                alignItems: "center",
-                minHeight: 48,
-                justifyContent: "center",
-              }}
-              accessibilityLabel="Pay subscription"
-            >
-              <Text style={{ color: "#FFFFFF", fontWeight: "700" }}>Pay Monthly Fee (100 ETB)</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => {
-                requestSponsorship({ storeId: activeStore._id });
-                Alert.alert("Success", "Sponsorship activated!");
-              }}
-              style={{
-                backgroundColor: "#F59E0B",
-                borderRadius: radius.sm,
-                padding: spacing.md,
-                alignItems: "center",
-                minHeight: 48,
-                justifyContent: "center",
-                marginTop: spacing.sm,
-              }}
-              accessibilityLabel="Request sponsorship"
-            >
-              <Text style={{ color: "#FFFFFF", fontWeight: "700" }}>Request Sponsorship (150 ETB)</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Logout */}
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: spacing.sm,
-            padding: spacing.md,
-            backgroundColor: colors.light.destructiveLight,
-            borderRadius: radius.sm,
-            minHeight: 48,
-          }}
-          accessibilityLabel="Logout"
-        >
-          <LogOut size={18} color={colors.light.destructive} />
-          <Text style={{ color: colors.light.destructive, fontWeight: "700" }}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          </TouchableOpacity>
+        </View>
+      </ScreenScrollView>
+    </Screen>
   );
 }

@@ -1,18 +1,20 @@
 import { Tabs, Redirect } from "expo-router";
 import { useCurrentUser } from "@/hooks/useAuth";
-import { View, ActivityIndicator, Text } from "react-native";
+import { View, ActivityIndicator } from "react-native";
 import { LayoutDashboard, Package, ShoppingBag, Settings } from "lucide-react-native";
-import { colors } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getTabBarScreenOptions } from "@/lib/tab-bar-options";
 
 export default function VendorLayout() {
   const { isLoading, isAuthenticated, user } = useCurrentUser();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.light.background }}>
-        <ActivityIndicator size="large" color={colors.light.primary} />
+      <View className="flex-1 justify-center items-center bg-background">
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -21,47 +23,33 @@ export default function VendorLayout() {
   if (user?.role !== "vendor") return <Redirect href="/" />;
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.light.accent,
-        tabBarInactiveTintColor: colors.light.textTertiary,
-        tabBarStyle: {
-          backgroundColor: colors.light.background,
-          borderTopColor: colors.light.border,
-          height: 56 + insets.bottom,
-          paddingBottom: insets.bottom,
-          paddingTop: 4,
-        },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
-      }}
-    >
+    <Tabs screenOptions={getTabBarScreenOptions(colors, insets)}>
       <Tabs.Screen
         name="index"
         options={{
           title: "Dashboard",
-          tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
+          tabBarIcon: ({ focused, color, size }) => <LayoutDashboard size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="orders"
         options={{
           title: "Orders",
-          tabBarIcon: ({ color, size }) => <Package size={size} color={color} />,
+          tabBarIcon: ({ focused, color, size }) => <Package size={size} color={color} fill={focused ? color : "transparent"} />,
         }}
       />
       <Tabs.Screen
         name="products"
         options={{
           title: "Products",
-          tabBarIcon: ({ color, size }) => <ShoppingBag size={size} color={color} />,
+          tabBarIcon: ({ focused, color, size }) => <ShoppingBag size={size} color={color} fill={focused ? color : "transparent"} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
-          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
+          tabBarIcon: ({ focused, color, size }) => <Settings size={size} color={color} />,
         }}
       />
     </Tabs>

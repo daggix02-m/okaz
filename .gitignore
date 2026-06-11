@@ -34,6 +34,11 @@ yarn-error.*
 .env
 .env*.local
 
+# AI / agents
+AGENTS.md
+CLAUDE.md
+.claude/
+
 # typescript
 *.tsbuildinfo
 

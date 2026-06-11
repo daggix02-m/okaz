@@ -1,81 +1,84 @@
-import { View, Text, FlatList } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, Text } from "react-native";
 import { Heart } from "lucide-react-native";
-import { colors, typography, spacing } from "@/lib/design-tokens";
-import { useQuery, useMutation } from "convex/react";
+import { useTheme } from "@/hooks/useTheme";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useCurrentUser } from "@/hooks/useAuth";
 import { ProductCard } from "@/components/ProductCard";
 import { StoreCard } from "@/components/StoreCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Screen, ScreenHeader, ScreenScrollView } from "@/components/ui/Screen";
 import { router } from "expo-router";
 
 export default function CustomerFavorites() {
-  const insets = useSafeAreaInsets();
-  const productFavIds = useQuery(api.favorites.getProductFavorites);
-  const storeFavIds = useQuery(api.favorites.getStoreFavorites);
-  const products = useQuery(api.products.list);
-  const stores = useQuery(api.stores.listApproved);
+  const { colors } = useTheme();
+  const { isGuest } = useCurrentUser();
+  const productFavIds = useQuery(api.favorites.getProductFavorites, isGuest ? "skip" : {});
+  const storeFavIds = useQuery(api.favorites.getStoreFavorites, isGuest ? "skip" : {});
+  const products = useQuery(api.products.list, {});
+  const stores = useQuery(api.stores.listApproved, {});
 
   const favProducts = products?.filter((p) => productFavIds?.includes(p._id)) ?? [];
   const favStores = stores?.filter((s) => storeFavIds?.includes(s._id)) ?? [];
-
   const isLoading = productFavIds === undefined || storeFavIds === undefined;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.light.background }}>
-      <View style={{ paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border }}>
-        <Text style={{ fontSize: typography.h2.fontSize, fontWeight: typography.h2.fontWeight, color: colors.light.text }}>
-          Favorites
-        </Text>
-      </View>
+    <Screen>
+      <ScreenHeader title="Favorites" />
 
-      {isLoading ? (
-        <View style={{ padding: spacing.lg, gap: spacing.md }}>
+      {isGuest ? (
+        <EmptyState
+          icon={<Heart size={48} color={colors.mutedForeground} />}
+          title="Sign in to save favorites"
+          message="Create an account or sign in to save your favorite products and stores."
+          action={{ label: "Sign In", onPress: () => router.push("/(auth)/sign-in") }}
+        />
+      ) : isLoading ? (
+        <View className="gap-3 p-4">
           {[1, 2, 3, 4].map((i) => <Skeleton key={i} height={220} />)}
         </View>
       ) : favProducts.length === 0 && favStores.length === 0 ? (
         <EmptyState
-          icon={<Heart size={48} color={colors.light.textTertiary} />}
+          icon={<Heart size={48} color={colors.mutedForeground} />}
           title="No favorites yet"
           message="Tap the heart icon on products and stores to save them here."
           action={{ label: "Browse Products", onPress: () => router.push("/(customer)") }}
         />
       ) : (
-        <FlatList
-          data={[]}
-          renderItem={null}
-          contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
-          ListHeaderComponent={
-            <View style={{ gap: spacing.xl }}>
-              {favStores.length > 0 && (
-                <View>
-                  <Text style={{ fontWeight: "700", textTransform: "uppercase", fontSize: typography.caption.fontSize, color: colors.light.textSecondary, letterSpacing: 1, marginBottom: spacing.md }}>
-                    Saved Stores ({favStores.length})
-                  </Text>
-                  {favStores.map((store) => (
-                    <StoreCard key={store._id} store={store} onPress={() => router.push(`/store/${store._id}`)} />
+        <ScreenScrollView contentContainerStyle={{ padding: 16 }}>
+          <View className="gap-6">
+            {favStores.length > 0 && (
+              <View>
+                <Text className="mb-3 font-['Montserrat_700Bold'] text-label uppercase tracking-widest text-muted-foreground">
+                  Saved Stores ({favStores.length})
+                </Text>
+                {favStores.map((store) => (
+                  <StoreCard
+                    key={store._id}
+                    store={store}
+                    onPress={() => router.push(`/store/${store._id}`)}
+                  />
+                ))}
+              </View>
+            )}
+            {favProducts.length > 0 && (
+              <View>
+                <Text className="mb-3 font-['Montserrat_700Bold'] text-label uppercase tracking-widest text-muted-foreground">
+                  Saved Products ({favProducts.length})
+                </Text>
+                <View className="flex-row flex-wrap gap-3">
+                  {favProducts.map((p) => (
+                    <View key={p._id} className="flex-1" style={{ minWidth: "45%", maxWidth: "50%" }}>
+                      <ProductCard product={p} isFavorited />
+                    </View>
                   ))}
                 </View>
-              )}
-              {favProducts.length > 0 && (
-                <View>
-                  <Text style={{ fontWeight: "700", textTransform: "uppercase", fontSize: typography.caption.fontSize, color: colors.light.textSecondary, letterSpacing: 1, marginBottom: spacing.md }}>
-                    Saved Products ({favProducts.length})
-                  </Text>
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md }}>
-                    {favProducts.map((p) => (
-                      <View key={p._id} style={{ flex: 1, minWidth: "45%", maxWidth: "50%" }}>
-                        <ProductCard product={p} />
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-            </View>
-          }
-        />
+              </View>
+            )}
+          </View>
+        </ScreenScrollView>
       )}
-    </View>
+    </Screen>
   );
 }

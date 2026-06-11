@@ -4,14 +4,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
   ScrollView,
 } from "react-native";
 import { router } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Search, SlidersHorizontal, ShoppingCart, MapPin, Sparkles } from "lucide-react-native";
-import { colors, typography, spacing, radius } from "@/lib/design-tokens";
+import { Screen, ScreenHeader, ScreenFlatList } from "@/components/ui/Screen";
+import { Search, SlidersHorizontal, ShoppingCart, MapPin, ShoppingBag, Smartphone, Laptop, Shirt, Sparkles } from "lucide-react-native";
+import { useTheme } from "@/hooks/useTheme";
+import { useCurrentUser } from "@/hooks/useAuth";
 import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
 import { useQuery } from "convex/react";
@@ -19,7 +18,9 @@ import { api } from "@/convex/_generated/api";
 import { ProductCard } from "@/components/ProductCard";
 import { StoreCard } from "@/components/StoreCard";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useCartStore } from "@/stores/cart.store";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import * as Haptics from "expo-haptics";
 
 const FILTERS = [
@@ -29,7 +30,8 @@ const FILTERS = [
 ] as const;
 
 export default function CustomerHome() {
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const { isAuthenticated } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
@@ -38,6 +40,7 @@ export default function CustomerHome() {
   const products = useProducts({ category: selectedCategory });
   const stores = useStores();
   const categories = useQuery(api.categories.list);
+  const productFavIds = useQuery(api.favorites.getProductFavorites, isAuthenticated ? {} : "skip");
   const cartItems = useCartStore((s) => s.items);
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -68,87 +71,67 @@ export default function CustomerHome() {
     { name: "Cosmetics", icon: "sparkles", slug: "cosmetics" },
   ];
 
-  const displayCategories = categories?.length ? categories : defaultCategories;
+  const renderCategoryIcon = (slug: string | undefined, isSelected: boolean) => {
+    const iconColor = isSelected ? colors.primaryForeground : colors.mutedForeground;
+    if (!slug) return <ShoppingBag size={20} color={iconColor} />;
+    switch (slug) {
+      case "phone": return <Smartphone size={20} color={iconColor} />;
+      case "electronics": return <Laptop size={20} color={iconColor} />;
+      case "cloth": return <Shirt size={20} color={iconColor} />;
+      case "cosmetics": return <Sparkles size={20} color={iconColor} />;
+      default: return <ShoppingBag size={20} color={iconColor} />;
+    }
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.light.background }}>
-      {/* Header */}
-      <View
-        style={{
-          paddingTop: insets.top + spacing.sm,
-          paddingHorizontal: spacing.lg,
-          paddingBottom: spacing.md,
-          backgroundColor: colors.light.background,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.light.border,
-        }}
-      >
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+    <Screen>
+      <ScreenHeader bordered>
+        <View className="flex-row items-center justify-between">
           <View>
-            <Text style={{ fontSize: typography.h2.fontSize, fontWeight: typography.h2.fontWeight, color: colors.light.text }}>
+            <Text className="text-[22px] font-bold text-foreground font-['Montserrat_700Bold']">
               OKAZ
             </Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.xs, marginTop: 2 }}>
-              <MapPin size={12} color={colors.light.accent} />
-              <Text style={{ fontSize: typography.caption.fontSize, color: colors.light.textSecondary }}>
+            <View className="flex-row items-center mt-0.5 gap-1">
+              <MapPin size={12} color={colors.accent} />
+              <Text className="text-xs text-muted-foreground font-['Montserrat_500Medium']">
                 Addis Ababa
               </Text>
             </View>
           </View>
-          <TouchableOpacity
-            onPress={() => {
-              router.push("/(customer)/cart");
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            }}
-            accessibilityLabel={`Shopping cart, ${cartCount} items`}
-            accessibilityRole="button"
-            style={{
-              position: "relative",
-              padding: spacing.sm,
-              minWidth: 48,
-              minHeight: 48,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <ShoppingCart size={22} color={colors.light.text} />
-            {cartCount > 0 && (
-              <View
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  right: 0,
-                  backgroundColor: colors.light.accent,
-                  width: 20,
-                  height: 20,
-                  borderRadius: 10,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Text style={{ color: "#FFFFFF", fontSize: 10, fontWeight: "700" }}>{cartCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          <View className="flex-row items-center gap-2">
+            <ThemeToggle size={20} />
+            <TouchableOpacity
+              onPress={() => {
+                router.push("/(customer)/cart");
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }}
+              accessibilityLabel={`Shopping cart, ${cartCount} items`}
+              accessibilityRole="button"
+              className="relative items-center justify-center w-12 h-12"
+            >
+              <ShoppingCart size={22} color={colors.foreground} />
+              {cartCount > 0 && (
+                <View className="absolute top-0 right-0 justify-center items-center w-5 h-5 rounded-full bg-destructive">
+                  <Text className="text-center text-destructive-foreground text-[10px] font-bold font-['Montserrat_700Bold']">
+                    {cartCount}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Search */}
-        <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
-          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", backgroundColor: colors.light.surface, borderRadius: radius.sm, paddingHorizontal: spacing.md, borderWidth: 1, borderColor: colors.light.border }}>
-            <Search size={18} color={colors.light.textTertiary} />
+        <View className="flex-row mt-3 gap-2">
+          <View className="flex-1 flex-row items-center rounded-lg border border-border bg-surface px-3">
+            <Search size={18} color={colors.mutedForeground} />
             <TextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholder="Search products..."
-              placeholderTextColor={colors.light.textTertiary}
+              placeholderTextColor={colors.mutedForeground}
               accessibilityLabel="Search products"
-              style={{
-                flex: 1,
-                padding: spacing.md,
-                fontSize: typography.body.fontSize,
-                color: colors.light.text,
-                minHeight: 48,
-              }}
+              className="flex-1 p-3 text-base text-foreground font-['Montserrat_400Regular'] min-h-[48px]"
             />
           </View>
           <TouchableOpacity
@@ -157,69 +140,64 @@ export default function CustomerHome() {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }}
             accessibilityLabel="Toggle filters"
+            className="items-center justify-center rounded-lg border w-12 h-12"
             style={{
-              padding: spacing.md,
-              backgroundColor: showFilters ? colors.light.primaryLight : colors.light.surface,
-              borderRadius: radius.sm,
-              borderWidth: 1,
-              borderColor: showFilters ? colors.light.primary : colors.light.border,
-              minWidth: 48,
-              minHeight: 48,
-              justifyContent: "center",
-              alignItems: "center",
+              backgroundColor: showFilters ? colors.primaryLight : colors.surface,
+              borderColor: showFilters ? colors.primary : colors.border,
             }}
           >
-            <SlidersHorizontal size={20} color={showFilters ? colors.light.primary : colors.light.textSecondary} />
+            <SlidersHorizontal
+              size={20}
+              color={showFilters ? colors.primary : colors.mutedForeground}
+            />
           </TouchableOpacity>
         </View>
 
         {/* Quick Filters */}
         {showFilters && (
-          <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
-            {FILTERS.map((f) => (
-              <TouchableOpacity
-                key={f.id}
-                onPress={() => setActiveFilter(f.id)}
-                accessibilityRole="button"
-                accessibilityLabel={f.label}
-                style={{
-                  paddingHorizontal: spacing.lg,
-                  paddingVertical: spacing.sm,
-                  borderRadius: radius.pill,
-                  backgroundColor: activeFilter === f.id ? colors.light.primary : colors.light.surface,
-                  borderWidth: 1,
-                  borderColor: activeFilter === f.id ? colors.light.primary : colors.light.border,
-                  minHeight: 36,
-                }}
-              >
-                <Text
+          <View className="flex-row mt-3 gap-2">
+            {FILTERS.map((f) => {
+              const isActive = activeFilter === f.id;
+              return (
+                <TouchableOpacity
+                  key={f.id}
+                  onPress={() => setActiveFilter(f.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={f.label}
+                  className="rounded-full border px-4 py-2 min-h-[36px]"
                   style={{
-                    fontSize: typography.caption.fontSize,
-                    fontWeight: activeFilter === f.id ? "700" : "500",
-                    color: activeFilter === f.id ? "#FFFFFF" : colors.light.textSecondary,
+                    backgroundColor: isActive ? colors.primary : colors.surface,
+                    borderColor: isActive ? colors.primary : colors.border,
                   }}
                 >
-                  {f.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    className={`text-xs font-['Montserrat_500Medium'] ${isActive ? 'font-bold' : 'font-medium'}`}
+                    style={{
+                      color: isActive ? colors.primaryForeground : colors.mutedForeground,
+                    }}
+                  >
+                    {f.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
-      </View>
+      </ScreenHeader>
 
-      <FlatList
+      <ScreenFlatList
         data={filteredProducts}
         keyExtractor={(item) => item._id}
         numColumns={2}
-        contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
-        columnWrapperStyle={{ gap: spacing.md }}
+        contentContainerStyle={{ padding: 16 }}
+        columnWrapperStyle={{ gap: 12 }}
         ListHeaderComponent={
-          <View style={{ marginBottom: spacing.lg }}>
+          <View className="mb-4">
             {/* Categories */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: spacing.md, paddingBottom: spacing.sm }}
+              contentContainerStyle={{ gap: 12, paddingBottom: 8 }}
             >
               {defaultCategories.map((cat) => {
                 const isSelected = selectedCategory === cat.slug;
@@ -230,35 +208,23 @@ export default function CustomerHome() {
                     accessibilityRole="radio"
                     accessibilityLabel={cat.name}
                     accessibilityState={{ selected: isSelected }}
-                    style={{
-                      alignItems: "center",
-                      paddingVertical: spacing.sm,
-                      minWidth: 64,
-                    }}
+                    className="items-center py-2 min-w-[64px]"
                   >
                     <View
+                      className="items-center justify-center rounded-full border mb-1 w-12 h-12"
                       style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 24,
-                        backgroundColor: isSelected ? colors.light.primary : colors.light.surface,
-                        borderWidth: 1,
-                        borderColor: isSelected ? colors.light.primary : colors.light.border,
-                        justifyContent: "center",
-                        alignItems: "center",
-                        marginBottom: spacing.xs,
+                        backgroundColor: isSelected ? colors.primary : colors.surface,
+                        borderColor: isSelected ? colors.primary : colors.border,
                       }}
                     >
-                      <Text style={{ fontSize: 18 }}>
-                        {cat.slug === "phone" ? "📱" : cat.slug === "electronics" ? "💻" : cat.slug === "cloth" ? "👚" : cat.slug === "cosmetics" ? "💄" : "🛍️"}
-                      </Text>
+                      {renderCategoryIcon(cat.slug, isSelected)}
                     </View>
                     <Text
+                      className="text-center text-[10px]"
                       style={{
-                        fontSize: 10,
                         fontWeight: isSelected ? "700" : "500",
-                        color: isSelected ? colors.light.primary : colors.light.textSecondary,
-                        textAlign: "center",
+                        fontFamily: isSelected ? "Montserrat_700Bold" : "Montserrat_500Medium",
+                        color: isSelected ? colors.primary : colors.mutedForeground,
                       }}
                     >
                       {cat.name}
@@ -268,19 +234,10 @@ export default function CustomerHome() {
               })}
             </ScrollView>
 
-            {/* NearYou Stores */}
+            {/* Nearby Stores */}
             {stores && stores.length > 0 && (
-              <View style={{ marginTop: spacing.lg }}>
-                <Text
-                  style={{
-                    fontSize: typography.caption.fontSize,
-                    fontWeight: "700",
-                    color: colors.light.text,
-                    textTransform: "uppercase",
-                    letterSpacing: 1,
-                    marginBottom: spacing.md,
-                  }}
-                >
+              <View className="mt-4">
+                <Text className="mb-3 uppercase tracking-wider text-xs font-bold text-foreground font-['Montserrat_500Medium']">
                   Nearby Stores
                 </Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -295,17 +252,7 @@ export default function CustomerHome() {
               </View>
             )}
 
-            <Text
-              style={{
-                fontSize: typography.caption.fontSize,
-                fontWeight: "700",
-                color: colors.light.text,
-                textTransform: "uppercase",
-                letterSpacing: 1,
-                marginTop: spacing.xl,
-                marginBottom: spacing.md,
-              }}
-            >
+            <Text className="mt-6 mb-3 uppercase tracking-wider text-xs font-bold text-foreground font-['Montserrat_500Medium']">
               {selectedCategory
                 ? defaultCategories.find((c) => c.slug === selectedCategory)?.name ?? "Products"
                 : "Featured Products"}
@@ -313,38 +260,29 @@ export default function CustomerHome() {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={{ flex: 1, maxWidth: "50%" }}>
-            <ProductCard product={item} />
+          <View className="flex-1 max-w-[50%]">
+            <ProductCard product={item} isFavorited={productFavIds?.includes(item._id)} />
           </View>
         )}
         ListEmptyComponent={
           !products ? (
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md }}>
+            <View className="flex-row flex-wrap gap-3">
               {[1, 2, 3, 4].map((i) => (
-                <View key={i} style={{ flex: 1, minWidth: "45%" }}>
+                <View key={i} className="flex-1 min-w-[45%]">
                   <Skeleton height={220} />
                 </View>
               ))}
             </View>
           ) : (
-            <View style={{ padding: spacing.xxl, alignItems: "center" }}>
-              <Text style={{ fontSize: typography.body.fontSize, color: colors.light.textSecondary }}>
-                No products found
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setSearchQuery("");
-                  setActiveFilter("all");
-                  setSelectedCategory(undefined);
-                }}
-                style={{ marginTop: spacing.md }}
-              >
-                <Text style={{ color: colors.light.primary, fontWeight: "600" }}>Clear filters</Text>
-              </TouchableOpacity>
-            </View>
+            <EmptyState
+              icon={<Search size={48} color={colors.mutedForeground} />}
+              title="No products found"
+              message="Try adjusting your search or filters."
+              action={{ label: "Clear filters", onPress: () => { setSearchQuery(""); setActiveFilter("all"); setSelectedCategory(undefined); } }}
+            />
           )
         }
       />
-    </View>
+    </Screen>
   );
 }

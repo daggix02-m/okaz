@@ -1,28 +1,110 @@
+import "@/global.css";
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ConvexClientProvider } from "@/lib/convex";
 import { StatusBar } from "expo-status-bar";
-import { View } from "react-native";
+import { View, ActivityIndicator } from "react-native";
+import { useFonts } from "expo-font";
+import { useThemeStore } from "@/stores/theme.store";
+import {
+  Montserrat_400Regular,
+  Montserrat_500Medium,
+  Montserrat_600SemiBold,
+  Montserrat_700Bold,
+} from "@expo-google-fonts/montserrat";
+import { FiraCode_400Regular } from "@expo-google-fonts/fira-code";
+import { WebMobileShell } from "@/components/WebMobileShell";
+import { useTheme } from "@/hooks/useTheme";
+import { useEffect } from "react";
+import { useColorScheme } from "nativewind";
+
+function AppContent() {
+  const { colors } = useTheme();
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background },
+        animation: "slide_from_right",
+      }}
+    >
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(customer)" />
+      <Stack.Screen name="(vendor)" />
+      <Stack.Screen name="(delivery)" />
+      <Stack.Screen name="(admin)" />
+      <Stack.Screen
+        name="store/[id]"
+        options={{
+          headerShown: true,
+          title: "Store",
+          presentation: "card",
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.foreground,
+          headerTitleStyle: {
+            fontFamily: "Montserrat_700Bold",
+            fontSize: 17,
+          },
+          headerShadowVisible: false,
+          headerBackTitle: "Back",
+        }}
+      />
+    </Stack>
+  );
+}
+
+function Shell() {
+  const mode = useThemeStore((s) => s.mode);
+  const resolved = useThemeStore((s) => s.resolved);
+  const isDark = resolved() === "dark";
+  const { setColorScheme } = useColorScheme();
+
+  useEffect(() => {
+    setColorScheme(resolved());
+  }, [resolved]);
+
+  return (
+    <>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <WebMobileShell>
+        <View style={{ flex: 1 }}>
+          <AppContent />
+        </View>
+      </WebMobileShell>
+    </>
+  );
+}
+
+function LoadingScreen() {
+  const { colors } = useTheme();
+  return (
+    <View className="flex-1 items-center justify-center bg-background">
+      <ActivityIndicator size="large" color={colors.primary} />
+    </View>
+  );
+}
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Montserrat_400Regular,
+    Montserrat_500Medium,
+    Montserrat_600SemiBold,
+    Montserrat_700Bold,
+    FiraCode_400Regular,
+  });
+
+  if (!fontsLoaded) {
+    return <LoadingScreen />;
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ConvexClientProvider>
-          <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(customer)" options={{ headerShown: false }} />
-            <Stack.Screen name="(vendor)" options={{ headerShown: false }} />
-            <Stack.Screen name="(delivery)" options={{ headerShown: false }} />
-            <Stack.Screen name="(admin)" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="store/[id]"
-              options={{ headerShown: true, title: "Store", presentation: "card" }}
-            />
-          </Stack>
+          <Shell />
         </ConvexClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

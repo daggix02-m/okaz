@@ -7,9 +7,10 @@ import {
   TextInput,
   ScrollView,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ShoppingCart, Minus, Plus, Trash2, ChevronRight } from "lucide-react-native";
-import { colors, typography, spacing, radius } from "@/lib/design-tokens";
+import { Screen, ScreenHeader, ScreenFlatList } from "@/components/ui/Screen";
+import { useScreenInsets } from "@/hooks/useScreenInsets";
+import { ShoppingCart, Minus, Plus, Trash2, ChevronRight, CheckCircle, Package } from "lucide-react-native";
+import { useTheme } from "@/hooks/useTheme";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -19,7 +20,8 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 
 export default function CustomerCart() {
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const { tabFooterBottom } = useScreenInsets();
   const {
     items,
     removeItem,
@@ -29,7 +31,7 @@ export default function CustomerCart() {
     getTotal,
     clear,
   } = useCartStore();
-  const { user } = useCurrentUser();
+  const { user, isGuest } = useCurrentUser();
   const createOrder = useMutation(api.orders.create);
   const [step, setStep] = useState<"cart" | "checkout">("cart");
   const [paymentMethod, setPaymentMethod] = useState<"telebirr" | "cbe" | "chapa">("chapa");
@@ -51,6 +53,7 @@ export default function CustomerCart() {
       for (const storeId of storeIds) {
         const storeItems = items.filter((i) => i.product.storeId === storeId);
         const storeSubtotal = storeItems.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+        const storeDeliveryFee = Math.round(50 + 1.5 * 30);
         await createOrder({
           storeId: storeId as any,
           items: storeItems.map((i) => ({
@@ -60,8 +63,8 @@ export default function CustomerCart() {
             quantity: i.quantity,
           })),
           subtotal: storeSubtotal,
-          deliveryFee: Math.round(50 + 1.5 * 30),
-          total: couponActive ? Math.round((storeSubtotal + Math.round(50 + 1.5 * 30)) * 0.7) : storeSubtotal + Math.round(50 + 1.5 * 30),
+          deliveryFee: storeDeliveryFee,
+          total: couponActive ? Math.round((storeSubtotal + storeDeliveryFee) * 0.7) : storeSubtotal + storeDeliveryFee,
           paymentMethod,
           deliveryAddress: address,
           deliveryLat: 9.03,
@@ -81,252 +84,210 @@ export default function CustomerCart() {
 
   if (orderComplete) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.light.background, justifyContent: "center", alignItems: "center", padding: spacing.xl }}>
-        <View style={{ backgroundColor: colors.light.accentLight, width: 80, height: 80, borderRadius: 40, justifyContent: "center", alignItems: "center", marginBottom: spacing.xl }}>
-          <Text style={{ fontSize: 36 }}>✓</Text>
+      <View className="flex-1 justify-center items-center bg-background p-6">
+        <View className="justify-center items-center w-20 h-20 rounded-full mb-6" style={{ backgroundColor: colors.successLight }}>
+          <CheckCircle size={36} color={colors.success} />
         </View>
-        <Text style={{ fontSize: typography.h2.fontSize, fontWeight: typography.h2.fontWeight, color: colors.light.text, textAlign: "center" }}>
+        <Text className="text-center text-[22px] font-bold leading-[28px] text-foreground font-['Montserrat_700Bold']">
           Order Placed!
         </Text>
-        <Text style={{ fontSize: typography.body.fontSize, color: colors.light.textSecondary, textAlign: "center", marginTop: spacing.sm }}>
+        <Text className="text-center text-[16px] leading-[24px] text-muted-foreground font-['Montserrat_400Regular'] mt-2">
           Track your order status in the Orders tab.
         </Text>
         <TouchableOpacity
           onPress={() => router.push("/(customer)/orders")}
-          style={{
-            marginTop: spacing.xl,
-            backgroundColor: colors.light.primary,
-            borderRadius: radius.sm,
-            paddingHorizontal: spacing.xl,
-            paddingVertical: spacing.md,
-            minHeight: 48,
-            justifyContent: "center",
-          }}
+          className="justify-center items-center mt-6 bg-primary rounded-lg px-6 py-3 min-h-[48px]"
         >
-          <Text style={{ color: "#FFFFFF", fontWeight: "700" }}>View Orders</Text>
+          <Text className="text-primary-foreground font-bold font-['Montserrat_700Bold']">View Orders</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.light.background }}>
-      <View style={{ paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border }}>
-        <Text style={{ fontSize: typography.h2.fontSize, fontWeight: typography.h2.fontWeight, color: colors.light.text }}>
-          {step === "cart" ? "My Cart" : "Checkout"}
-        </Text>
-        {items.length > 0 && (
-          <Text style={{ fontSize: typography.caption.fontSize, color: colors.light.textSecondary, marginTop: spacing.xs }}>
-            {items.length} {items.length === 1 ? "item" : "items"}
-          </Text>
-        )}
-      </View>
+    <Screen>
+      <ScreenHeader
+        title={step === "cart" ? "My Cart" : "Checkout"}
+        subtitle={
+          items.length > 0
+            ? `${items.length} ${items.length === 1 ? "item" : "items"}`
+            : undefined
+        }
+      />
 
       {step === "cart" ? (
         items.length === 0 ? (
           <EmptyState
-            icon={<ShoppingCart size={48} color={colors.light.textTertiary} />}
+            icon={<ShoppingCart size={48} color={colors.mutedForeground} />}
             title="Your cart is empty"
             message="Add products from the home screen."
             action={{ label: "Browse Products", onPress: () => router.push("/(customer)") }}
           />
         ) : (
           <>
-            <FlatList
+            <ScreenFlatList
               data={items}
               keyExtractor={(item) => item.product._id}
-              contentContainerStyle={{ padding: spacing.lg }}
+              contentContainerStyle={{ padding: 16, paddingBottom: 16 }}
+              withTabBar={false}
               renderItem={({ item }) => (
-                <View
-                  style={{
-                    flexDirection: "row",
-                    padding: spacing.md,
-                    backgroundColor: colors.light.background,
-                    borderRadius: radius.md,
-                    borderWidth: 1,
-                    borderColor: colors.light.border,
-                    marginBottom: spacing.sm,
-                    gap: spacing.md,
-                  }}
-                >
-                  <View style={{ width: 56, height: 56, backgroundColor: colors.light.surface, borderRadius: radius.sm, justifyContent: "center", alignItems: "center" }}>
-                    <Text style={{ fontSize: 24 }}>📦</Text>
+                <View className="flex-row p-3 bg-card rounded-xl border border-border mb-2 gap-3">
+                  <View className="justify-center items-center w-14 h-14 bg-surface rounded-lg">
+                    <Package size={28} color={colors.mutedForeground} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: "600", fontSize: 14, color: colors.light.text }} numberOfLines={1}>
+                    <Text className="font-semibold text-[14px] text-foreground font-['Montserrat_600SemiBold']" numberOfLines={1}>
                       {item.product.name}
                     </Text>
-                    <Text style={{ fontSize: 14, fontWeight: "700", color: colors.light.text, fontVariant: ["tabular-nums"] }}>
+                    <Text className="font-bold text-[14px] text-foreground font-['Montserrat_700Bold'] tabular-nums">
                       {item.product.price.toLocaleString()} ETB
                     </Text>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, marginTop: spacing.xs }}>
+                    <View className="flex-row items-center gap-2 mt-1">
                       <TouchableOpacity
                         onPress={() => {
                           updateQuantity(item.product._id, item.quantity - 1);
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         }}
-                        style={{ padding: spacing.xs, minWidth: 36, minHeight: 36, justifyContent: "center", alignItems: "center", backgroundColor: colors.light.surface, borderRadius: radius.sm }}
+                        className="justify-center items-center p-1 w-9 h-9 bg-surface rounded-lg"
                         accessibilityLabel="Decrease quantity"
                       >
-                        <Minus size={14} color={colors.light.text} />
+                        <Minus size={14} color={colors.foreground} />
                       </TouchableOpacity>
-                      <Text style={{ fontWeight: "600", minWidth: 20, textAlign: "center" }}>{item.quantity}</Text>
+                      <Text className="text-center font-semibold min-w-[20px] text-foreground font-['Montserrat_600SemiBold']">{item.quantity}</Text>
                       <TouchableOpacity
                         onPress={() => {
                           updateQuantity(item.product._id, item.quantity + 1);
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         }}
-                        style={{ padding: spacing.xs, minWidth: 36, minHeight: 36, justifyContent: "center", alignItems: "center", backgroundColor: colors.light.surface, borderRadius: radius.sm }}
+                        className="justify-center items-center p-1 w-9 h-9 bg-surface rounded-lg"
                         accessibilityLabel="Increase quantity"
                       >
-                        <Plus size={14} color={colors.light.text} />
+                        <Plus size={14} color={colors.foreground} />
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => {
                           removeItem(item.product._id);
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                         }}
-                        style={{ padding: spacing.xs, minWidth: 36, minHeight: 36, justifyContent: "center", alignItems: "center", marginLeft: "auto" }}
+                        className="justify-center items-center p-1 w-9 h-9 ml-auto"
                         accessibilityLabel={`Remove ${item.product.name} from cart`}
                       >
-                        <Trash2 size={16} color={colors.light.destructive} />
+                        <Trash2 size={16} color={colors.destructive} />
                       </TouchableOpacity>
                     </View>
                   </View>
                 </View>
               )}
             />
-            <View style={{ padding: spacing.lg, borderTopWidth: 1, borderTopColor: colors.light.border, backgroundColor: colors.light.background }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.xs }}>
-                <Text style={{ color: colors.light.textSecondary }}>Subtotal</Text>
-                <Text style={{ fontWeight: "600", fontVariant: ["tabular-nums"] }}>{subtotal.toLocaleString()} ETB</Text>
+            <View
+              className="border-t border-border bg-background p-4"
+              style={{ paddingBottom: tabFooterBottom }}
+            >
+              <View className="flex-row justify-between mb-1">
+                <Text className="text-muted-foreground font-['Montserrat_500Medium']">Subtotal</Text>
+                <Text className="font-semibold text-foreground font-['Montserrat_600SemiBold'] tabular-nums">{subtotal.toLocaleString()} ETB</Text>
               </View>
               {couponActive && (
-                <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.xs }}>
-                  <Text style={{ color: "#D97706" }}>30% Coupon</Text>
-                  <Text style={{ fontWeight: "600", color: "#D97706", fontVariant: ["tabular-nums"] }}>
+                <View className="flex-row justify-between mb-1">
+                  <Text className="text-success font-['Montserrat_500Medium']">30% Coupon</Text>
+                  <Text className="font-semibold text-success font-['Montserrat_600SemiBold'] tabular-nums">
                     -{Math.round(subtotal * 0.3).toLocaleString()} ETB
                   </Text>
                 </View>
               )}
-              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.md }}>
-                <Text style={{ color: colors.light.textSecondary }}>Delivery</Text>
-                <Text style={{ fontWeight: "600", fontVariant: ["tabular-nums"] }}>{deliveryFee.toLocaleString()} ETB</Text>
+              <View className="flex-row justify-between mb-3">
+                <Text className="text-muted-foreground font-['Montserrat_500Medium']">Delivery</Text>
+                <Text className="font-semibold text-foreground font-['Montserrat_600SemiBold'] tabular-nums">{deliveryFee.toLocaleString()} ETB</Text>
               </View>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.lg }}>
-                <Text style={{ fontWeight: "700", fontSize: 16 }}>Total</Text>
-                <Text style={{ fontWeight: "700", fontSize: 16, fontVariant: ["tabular-nums"] }}>{total.toLocaleString()} ETB</Text>
+              <View className="flex-row justify-between mb-4">
+                <Text className="font-bold text-[16px] text-foreground font-['Montserrat_700Bold']">Total</Text>
+                <Text className="font-bold text-[16px] text-foreground font-['Montserrat_700Bold'] tabular-nums">{total.toLocaleString()} ETB</Text>
               </View>
               <TouchableOpacity
                 onPress={() => {
+                  if (isGuest) {
+                    router.push("/(auth)/sign-in");
+                    return;
+                  }
                   setStep("checkout");
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 }}
-                style={{
-                  backgroundColor: colors.light.primary,
-                  borderRadius: radius.sm,
-                  padding: spacing.md,
-                  minHeight: 48,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                accessibilityLabel="Proceed to checkout"
+                className="items-center justify-center bg-primary rounded-lg p-3 min-h-[48px]"
+                accessibilityLabel={isGuest ? "Sign in to checkout" : "Proceed to checkout"}
               >
-                <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 16 }}>Proceed to Checkout</Text>
+                <Text className="text-primary-foreground font-bold text-[16px] font-['Montserrat_700Bold']">
+                  {isGuest ? "Sign in to Checkout" : "Proceed to Checkout"}
+                </Text>
               </TouchableOpacity>
             </View>
           </>
         )
       ) : (
-        <ScrollView contentContainerStyle={{ padding: spacing.lg }}>
-          <View style={{ gap: spacing.lg }}>
+        <ScrollView contentContainerStyle={{ padding: 16 }}>
+          <View className="gap-4">
             <View>
-              <Text style={{ fontWeight: "600", marginBottom: spacing.sm, color: colors.light.text }}>Delivery Address</Text>
+              <Text className="font-semibold mb-2 text-foreground font-['Montserrat_600SemiBold']">Delivery Address</Text>
               <TextInput
                 value={address}
                 onChangeText={setAddress}
-                style={{
-                  backgroundColor: colors.light.surface,
-                  borderWidth: 1,
-                  borderColor: colors.light.border,
-                  borderRadius: radius.sm,
-                  padding: spacing.md,
-                  fontSize: typography.body.fontSize,
-                  color: colors.light.text,
-                  minHeight: 48,
-                }}
+                className="bg-surface border border-border rounded-lg p-3 text-[16px] text-foreground font-['Montserrat_400Regular'] min-h-[48px]"
                 accessibilityLabel="Delivery address"
               />
             </View>
 
             <View>
-              <Text style={{ fontWeight: "600", marginBottom: spacing.sm, color: colors.light.text }}>Payment Method</Text>
+              <Text className="font-semibold mb-2 text-foreground font-['Montserrat_600SemiBold']">Payment Method</Text>
               {(["chapa", "telebirr", "cbe"] as const).map((method) => (
                 <TouchableOpacity
                   key={method}
                   onPress={() => setPaymentMethod(method)}
+                  className="flex-row items-center p-3 rounded-lg border mb-2 min-h-[48px]"
                   style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    padding: spacing.md,
-                    backgroundColor: paymentMethod === method ? colors.light.primaryLight : colors.light.surface,
-                    borderRadius: radius.sm,
-                    borderWidth: 1,
-                    borderColor: paymentMethod === method ? colors.light.primary : colors.light.border,
-                    marginBottom: spacing.sm,
-                    minHeight: 48,
+                    backgroundColor: paymentMethod === method ? colors.primaryLight : colors.surface,
+                    borderColor: paymentMethod === method ? colors.primary : colors.border,
                   }}
                   accessibilityRole="radio"
                   accessibilityLabel={method === "chapa" ? "Chapa" : method === "telebirr" ? "Telebirr" : "CBE"}
                   accessibilityState={{ selected: paymentMethod === method }}
                 >
-                  <View style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 10,
-                    borderWidth: 2,
-                    borderColor: paymentMethod === method ? colors.light.primary : colors.light.border,
-                    backgroundColor: paymentMethod === method ? colors.light.primary : "transparent",
-                    marginRight: spacing.md,
-                  }} />
-                  <Text style={{ fontWeight: "600", textTransform: "capitalize" }}>{method}</Text>
+                  <View
+                    className="w-5 h-5 rounded-full border-2 mr-3"
+                    style={{
+                      borderColor: paymentMethod === method ? colors.primary : colors.border,
+                      backgroundColor: paymentMethod === method ? colors.primary : "transparent",
+                    }}
+                  />
+                  <Text className="font-semibold capitalize text-foreground font-['Montserrat_600SemiBold']">{method}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <View style={{ flexDirection: "row", justifyContent: "space-between", padding: spacing.md, backgroundColor: colors.light.surface, borderRadius: radius.sm }}>
-              <Text style={{ fontWeight: "700" }}>Total</Text>
-              <Text style={{ fontWeight: "700", fontSize: 18, fontVariant: ["tabular-nums"] }}>{total.toLocaleString()} ETB</Text>
+            <View className="flex-row justify-between p-3 bg-surface rounded-lg">
+              <Text className="font-bold text-foreground font-['Montserrat_700Bold']">Total</Text>
+              <Text className="font-bold text-[18px] text-foreground font-['Montserrat_700Bold'] tabular-nums">{total.toLocaleString()} ETB</Text>
             </View>
 
             <TouchableOpacity
               onPress={handlePlaceOrder}
               disabled={loading}
-              style={{
-                backgroundColor: colors.light.accent,
-                borderRadius: radius.sm,
-                padding: spacing.md,
-                minHeight: 48,
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: loading ? 0.6 : 1,
-              }}
+              className="items-center justify-center bg-accent rounded-lg p-3 min-h-[48px]"
+              style={{ opacity: loading ? 0.6 : 1 }}
               accessibilityLabel="Place order"
             >
-              <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 16 }}>
+              <Text className="text-accent-foreground font-bold text-[16px] font-['Montserrat_700Bold']">
                 {loading ? "Placing Order..." : `Pay ${total.toLocaleString()} ETB`}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => setStep("cart")}
-              style={{ alignItems: "center", padding: spacing.sm }}
+              className="items-center p-2"
             >
-              <Text style={{ color: colors.light.primary, fontWeight: "600" }}>Back to Cart</Text>
+              <Text className="text-primary font-semibold font-['Montserrat_600SemiBold']">Back to Cart</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       )}
-    </View>
+    </Screen>
   );
 }

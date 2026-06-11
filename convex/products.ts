@@ -27,22 +27,23 @@ export const list = query({
   },
   returns: v.array(productValidator),
   handler: async (ctx, args) => {
-    if (args.storeId) {
+    const { storeId, featured, category } = args;
+    if (storeId !== undefined) {
       return await ctx.db
         .query("products")
-        .withIndex("by_store", (q) => q.eq("storeId", args.storeId))
+        .withIndex("by_store", (q) => q.eq("storeId", storeId))
         .collect();
     }
-    if (args.featured) {
+    if (featured === true) {
       return await ctx.db
         .query("products")
         .withIndex("by_featured", (q) => q.eq("isFeatured", true))
         .collect();
     }
-    if (args.category) {
+    if (category !== undefined) {
       return await ctx.db
         .query("products")
-        .withIndex("by_category", (q) => q.eq("category", args.category))
+        .withIndex("by_category", (q) => q.eq("category", category))
         .collect();
     }
     return await ctx.db.query("products").collect();

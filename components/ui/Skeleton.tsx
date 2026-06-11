@@ -1,15 +1,13 @@
-import { View, Animated, Easing } from "react-native";
+import { View, Animated, Easing, Platform } from "react-native";
 import { useEffect, useRef } from "react";
-import { colors, radius } from "@/lib/design-tokens";
-
 export function Skeleton({ height = 100, width: w }: { height?: number; width?: number }) {
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(anim, { toValue: 1, duration: 800, easing: Easing.ease, useNativeDriver: true }),
-        Animated.timing(anim, { toValue: 0, duration: 800, easing: Easing.ease, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 1, duration: 800, easing: Easing.ease, useNativeDriver: Platform.OS !== "web" }),
+        Animated.timing(anim, { toValue: 0, duration: 800, easing: Easing.ease, useNativeDriver: Platform.OS !== "web" }),
       ])
     );
     loop.start();
@@ -20,11 +18,10 @@ export function Skeleton({ height = 100, width: w }: { height?: number; width?: 
 
   return (
     <Animated.View
+      className="rounded-xl bg-surface"
       style={{
         height,
         width: w,
-        backgroundColor: colors.light.border,
-        borderRadius: radius.md,
         opacity,
       }}
     />

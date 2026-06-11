@@ -1,7 +1,11 @@
 import { httpAction } from "./_generated/server";
 
+declare const process: { env: Record<string, string | undefined> };
+
 export const chapaInitialize = httpAction(async (ctx, request) => {
   const body = await request.json();
+  const chapaKey = process.env.CHAPA_SECRET_KEY ?? "";
+  const siteUrl = process.env.CONVEX_SITE_URL ?? "";
   const { amount, email, firstName, lastName, txRef, orderId } = body as {
     amount: number;
     email: string;
@@ -15,7 +19,7 @@ export const chapaInitialize = httpAction(async (ctx, request) => {
     const response = await fetch("https://api.chapa.co/v1/transaction/initialize", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.CHAPA_SECRET_KEY}`,
+        Authorization: `Bearer ${chapaKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -25,7 +29,7 @@ export const chapaInitialize = httpAction(async (ctx, request) => {
         first_name: firstName,
         last_name: lastName,
         tx_ref: txRef,
-        callback_url: `${process.env.CONVEX_SITE_URL}/chapa-webhook`,
+        callback_url: `${siteUrl}/chapa-webhook`,
         return_url: `okaz://payment/success?order=${orderId}`,
       }),
     });

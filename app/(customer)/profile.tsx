@@ -1,18 +1,19 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { User, LogOut, Gift, Share2 } from "lucide-react-native";
+import { View, Text, TouchableOpacity, TextInput, Alert } from "react-native";
+import { Screen, ScreenHeader, ScreenScrollView } from "@/components/ui/Screen";
+import { User, LogOut, Gift, Share2, CheckCircle, LogIn } from "lucide-react-native";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useCurrentUser } from "@/hooks/useAuth";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { colors, typography, spacing, radius } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
+import { router } from "expo-router";
 
 export default function CustomerProfile() {
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const { signOut } = useAuthActions();
-  const { user } = useCurrentUser();
+  const { user, isGuest } = useCurrentUser();
   const claimCoupon = useMutation(api.users.claimCoupon);
   const trackReferral = useMutation(api.users.trackReferral);
   const updateProfile = useMutation(api.users.updateProfile);
@@ -49,160 +50,136 @@ export default function CustomerProfile() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.light.background }}>
-      <View style={{ paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border }}>
-        <Text style={{ fontSize: typography.h2.fontSize, fontWeight: typography.h2.fontWeight, color: colors.light.text }}>
-          Profile
-        </Text>
-      </View>
-
-      <View style={{ padding: spacing.lg, gap: spacing.xl }}>
+    <Screen>
+      <ScreenHeader title="Profile" />
+      <ScreenScrollView contentContainerStyle={{ padding: 16 }}>
+      {isGuest ? (
+        <View className="gap-6">
+          <View className="items-center rounded-xl bg-surface p-4">
+            <View className="justify-center items-center w-16 h-16 rounded-full mb-3" style={{ backgroundColor: colors.primaryLight }}>
+              <User size={28} color={colors.primary} />
+            </View>
+            <Text className="text-[18px] font-semibold leading-[24px] text-foreground font-['Montserrat_600SemiBold'] text-center">
+              Sign in to unlock your profile
+            </Text>
+            <Text className="text-[12px] leading-[16px] text-muted-foreground font-['Montserrat_500Medium'] mt-2 text-center">
+              Track orders, save favorites, earn referral rewards, and more.
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(auth)/sign-in")}
+              className="items-center justify-center mt-4 bg-primary rounded-lg p-3 min-h-[48px] w-full"
+              accessibilityLabel="Sign in"
+            >
+              <View className="flex-row items-center gap-2">
+                <LogIn size={18} color={colors.primaryForeground} />
+                <Text className="text-primary-foreground font-bold font-['Montserrat_700Bold']">Sign In</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/(auth)/sign-up")}
+              className="items-center mt-2 p-2"
+            >
+              <Text className="text-primary font-semibold font-['Montserrat_600SemiBold']">Create an Account</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+      <View className="gap-6">
         {/* Profile Card */}
-        <View style={{ backgroundColor: colors.light.surface, borderRadius: radius.md, padding: spacing.lg, alignItems: "center" }}>
-          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.light.primaryLight, justifyContent: "center", alignItems: "center", marginBottom: spacing.md }}>
-            <Text style={{ fontSize: 28 }}>🐼</Text>
+        <View className="items-center bg-surface rounded-xl p-4">
+          <View className="justify-center items-center w-16 h-16 rounded-full mb-3" style={{ backgroundColor: colors.primaryLight }}>
+            <User size={28} color={colors.primary} />
           </View>
           {editing ? (
-            <View style={{ width: "100%", gap: spacing.md }}>
+            <View className="w-full gap-3">
               <TextInput
                 value={name}
                 onChangeText={setName}
-                style={{
-                  backgroundColor: colors.light.background,
-                  borderWidth: 1,
-                  borderColor: colors.light.border,
-                  borderRadius: radius.sm,
-                  padding: spacing.md,
-                  fontSize: typography.body.fontSize,
-                  color: colors.light.text,
-                  minHeight: 48,
-                }}
+                className="bg-surface border border-border rounded-lg p-3 text-[16px] text-foreground font-['Montserrat_400Regular'] min-h-[48px]"
                 placeholder="Name"
+                placeholderTextColor={colors.mutedForeground}
                 accessibilityLabel="Edit name"
               />
               <TextInput
                 value={phone}
                 onChangeText={setPhone}
-                style={{
-                  backgroundColor: colors.light.background,
-                  borderWidth: 1,
-                  borderColor: colors.light.border,
-                  borderRadius: radius.sm,
-                  padding: spacing.md,
-                  fontSize: typography.body.fontSize,
-                  color: colors.light.text,
-                  minHeight: 48,
-                }}
+                className="bg-surface border border-border rounded-lg p-3 text-[16px] text-foreground font-['Montserrat_400Regular'] min-h-[48px]"
                 placeholder="Phone"
+                placeholderTextColor={colors.mutedForeground}
                 keyboardType="phone-pad"
                 accessibilityLabel="Edit phone"
               />
-              <View style={{ flexDirection: "row", gap: spacing.sm }}>
+              <View className="flex-row gap-2">
                 <TouchableOpacity
                   onPress={() => setEditing(false)}
-                  style={{
-                    flex: 1,
-                    padding: spacing.md,
-                    backgroundColor: colors.light.surface,
-                    borderRadius: radius.sm,
-                    borderWidth: 1,
-                    borderColor: colors.light.border,
-                    alignItems: "center",
-                    minHeight: 48,
-                    justifyContent: "center",
-                  }}
+                  className="flex-1 items-center justify-center bg-surface border border-border rounded-lg p-3 min-h-[48px]"
                 >
-                  <Text style={{ fontWeight: "600" }}>Cancel</Text>
+                  <Text className="font-semibold text-foreground font-['Montserrat_600SemiBold']">Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleSaveProfile}
-                  style={{
-                    flex: 1,
-                    padding: spacing.md,
-                    backgroundColor: colors.light.primary,
-                    borderRadius: radius.sm,
-                    alignItems: "center",
-                    minHeight: 48,
-                    justifyContent: "center",
-                  }}
+                  className="flex-1 items-center justify-center bg-primary rounded-lg p-3 min-h-[48px]"
                 >
-                  <Text style={{ color: "#FFFFFF", fontWeight: "700" }}>Save</Text>
+                  <Text className="text-primary-foreground font-bold font-['Montserrat_700Bold']">Save</Text>
                 </TouchableOpacity>
               </View>
             </View>
           ) : (
             <>
-              <Text style={{ fontSize: typography.h3.fontSize, fontWeight: typography.h3.fontWeight, color: colors.light.text }}>
+              <Text className="text-[18px] font-semibold leading-[24px] text-foreground font-['Montserrat_600SemiBold']">
                 {user?.name}
               </Text>
-              <Text style={{ fontSize: typography.caption.fontSize, color: colors.light.textSecondary, marginTop: spacing.xs }}>
+              <Text className="text-[12px] leading-[16px] text-muted-foreground font-['Montserrat_500Medium'] mt-1">
                 {user?.email}
               </Text>
               {user?.phone && (
-                <Text style={{ fontSize: typography.caption.fontSize, color: colors.light.textSecondary }}>
+                <Text className="text-[12px] leading-[16px] text-muted-foreground font-['Montserrat_500Medium']">
                   {user.phone}
                 </Text>
               )}
               <TouchableOpacity
                 onPress={() => setEditing(true)}
-                style={{ marginTop: spacing.md }}
+                className="mt-3"
               >
-                <Text style={{ color: colors.light.primary, fontWeight: "600" }}>Edit Profile</Text>
+                <Text className="text-primary font-semibold font-['Montserrat_600SemiBold']">Edit Profile</Text>
               </TouchableOpacity>
             </>
           )}
         </View>
 
         {/* Referral Card */}
-        <View style={{ backgroundColor: colors.light.surface, borderRadius: radius.md, padding: spacing.lg }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.md }}>
-            <Share2 size={20} color={colors.light.primary} />
-            <Text style={{ fontWeight: "700", fontSize: typography.body.fontSize, color: colors.light.text }}>
+        <View className="bg-surface rounded-xl p-4">
+          <View className="flex-row items-center gap-2 mb-3">
+            <Share2 size={20} color={colors.primary} />
+            <Text className="font-bold text-[16px] text-foreground font-['Montserrat_700Bold']">
               Refer a Friend
             </Text>
           </View>
-          <Text style={{ fontSize: typography.caption.fontSize, color: colors.light.textSecondary, marginBottom: spacing.md }}>
+          <Text className="text-[12px] leading-[16px] text-muted-foreground font-['Montserrat_500Medium'] mb-3">
             Get 20 referrals to unlock a 30% discount coupon! You have {user?.referralCount ?? 0}/20 referrals.
           </Text>
-          <View style={{ backgroundColor: colors.light.borderLight, borderRadius: radius.sm, height: 4, overflow: "hidden", marginBottom: spacing.md }}>
-            <View style={{ backgroundColor: colors.light.accent, height: "100%", width: `${Math.min(100, ((user?.referralCount ?? 0) / 20) * 100)}%` }} />
+          <View className="rounded-lg h-1 overflow-hidden mb-3" style={{ backgroundColor: colors.borderLight }}>
+            <View style={{ backgroundColor: colors.warning, height: "100%", width: `${Math.min(100, ((user?.referralCount ?? 0) / 20) * 100)}%` }} />
           </View>
           {user?.couponActive && (
             <TouchableOpacity
               onPress={handleClaimCoupon}
-              style={{
-                backgroundColor: "#D97706",
-                borderRadius: radius.sm,
-                padding: spacing.md,
-                alignItems: "center",
-                marginBottom: spacing.md,
-                minHeight: 48,
-                justifyContent: "center",
-              }}
+              className="items-center justify-center bg-warning rounded-lg p-3 mb-3 min-h-[48px]"
               accessibilityLabel="Claim 30% coupon"
             >
-              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-                <Gift size={16} color="#FFFFFF" />
-                <Text style={{ color: "#FFFFFF", fontWeight: "700" }}>Claim 30% Coupon</Text>
+              <View className="flex-row items-center gap-2">
+                <Gift size={16} color={colors.warningForeground} />
+                <Text className="text-warning-foreground font-bold font-['Montserrat_700Bold']">Claim 30% Coupon</Text>
               </View>
             </TouchableOpacity>
           )}
-          <View style={{ flexDirection: "row", gap: spacing.sm, alignItems: "center" }}>
+          <View className="flex-row items-center gap-2">
             <TextInput
               value={refCode}
               onChangeText={setRefCode}
               placeholder="Enter referral code"
-              style={{
-                flex: 1,
-                backgroundColor: colors.light.background,
-                borderWidth: 1,
-                borderColor: colors.light.border,
-                borderRadius: radius.sm,
-                padding: spacing.md,
-                fontSize: typography.body.fontSize,
-                color: colors.light.text,
-                minHeight: 48,
-              }}
+              placeholderTextColor={colors.mutedForeground}
+              className="flex-1 bg-surface border border-border rounded-lg p-3 text-[16px] text-foreground font-['Montserrat_400Regular'] min-h-[48px]"
               accessibilityLabel="Referral code"
             />
             <TouchableOpacity
@@ -213,17 +190,9 @@ export default function CustomerProfile() {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 }
               }}
-              style={{
-                backgroundColor: colors.light.primary,
-                borderRadius: radius.sm,
-                padding: spacing.md,
-                minHeight: 48,
-                minWidth: 80,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              className="items-center justify-center bg-primary rounded-lg p-3 min-h-[48px] min-w-[80px]"
             >
-              <Text style={{ color: "#FFFFFF", fontWeight: "700" }}>Submit</Text>
+              <Text className="text-primary-foreground font-bold font-['Montserrat_700Bold']">Submit</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -231,23 +200,17 @@ export default function CustomerProfile() {
         {/* Logout */}
         <TouchableOpacity
           onPress={handleLogout}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: spacing.sm,
-            padding: spacing.md,
-            backgroundColor: colors.light.destructiveLight,
-            borderRadius: radius.sm,
-            minHeight: 48,
-          }}
+          className="flex-row items-center justify-center rounded-lg p-3 min-h-[48px]"
+          style={{ backgroundColor: colors.destructiveLight }}
           accessibilityLabel="Logout"
           accessibilityRole="button"
         >
-          <LogOut size={18} color={colors.light.destructive} />
-          <Text style={{ color: colors.light.destructive, fontWeight: "700" }}>Logout</Text>
+          <LogOut size={18} color={colors.destructive} />
+          <Text className="text-destructive font-bold font-['Montserrat_700Bold'] ml-2">Logout</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+      )}
+      </ScreenScrollView>
+    </Screen>
   );
 }

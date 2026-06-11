@@ -1,55 +1,48 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { Star } from "lucide-react-native";
-import { colors, spacing, radius, typography } from "@/lib/design-tokens";
+import { useTheme } from "@/hooks/useTheme";
 import { Doc } from "@/convex/_generated/dataModel";
+import { Image } from "expo-image";
+import { getStoreImage } from "@/lib/image-helper";
 
 type Store = Doc<"stores">;
 
 export function StoreCard({ store, onPress }: { store: Store; onPress: () => void }) {
+  const { colors } = useTheme();
+
   return (
     <TouchableOpacity
       onPress={onPress}
       accessibilityLabel={`${store.name}, ${store.rating} stars`}
-      style={{
-        backgroundColor: colors.light.background,
-        borderRadius: radius.md,
-        borderWidth: 1,
-        borderColor: colors.light.border,
-        padding: spacing.md,
-        marginRight: spacing.md,
-        width: 200,
-      }}
+      className="bg-card border border-border rounded-xl p-4 mr-4 w-[200px]"
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-        <View
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: radius.sm,
-            backgroundColor: colors.light.surface,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ fontSize: 24 }}>🏬</Text>
+      <View className="flex-row items-center gap-4">
+        <View className="w-12 h-12 bg-surface rounded-lg overflow-hidden border border-border">
+          <Image
+            source={{ uri: getStoreImage(store.name, store.category) }}
+            className="w-full h-full"
+            contentFit="cover"
+          />
         </View>
-        <View style={{ flex: 1 }}>
+        <View className="flex-1">
           <Text
-            style={{ fontWeight: "700", fontSize: 13, color: colors.light.text }}
+            className="font-bold text-[13px] text-card-foreground"
             numberOfLines={1}
           >
             {store.name}
           </Text>
-          <Text style={{ fontSize: 10, color: colors.light.textSecondary, marginTop: 2 }} numberOfLines={1}>
+          <Text
+            className="mt-0.5 text-[10px] text-muted-foreground"
+            numberOfLines={1}
+          >
             {store.locationName}
           </Text>
-
-          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.xs, marginTop: spacing.xs }}>
-            <Star size={10} color="#F59E0B" fill="#F59E0B" />
-            <Text style={{ fontSize: 10, fontWeight: "600", color: colors.light.text }}>
+          <View className="flex-row items-center mt-1 gap-1">
+            <Star size={12} color={colors.chart4} fill={colors.chart4} />
+            <Text className="font-semibold text-[11px] text-card-foreground">
               {store.rating}
             </Text>
-            <Text style={{ fontSize: 9, color: colors.light.textTertiary }}>
+            <Text className="text-[10px] text-muted-foreground">
               ({store.reviewCount})
             </Text>
           </View>
