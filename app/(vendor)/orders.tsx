@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import * as Haptics from "expo-haptics";
 import { Package } from "lucide-react-native";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function VendorOrders() {
   const { colors } = useTheme();
@@ -26,7 +27,7 @@ export default function VendorOrders() {
 
   return (
     <Screen>
-      <ScreenHeader title="Orders" />
+      <ScreenHeader title="Orders" right={<ThemeToggle size={20} />} />
 
       {!orders ? (
         <View className="p-4 gap-3">

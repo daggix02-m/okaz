@@ -2,13 +2,14 @@ import { View, Text } from "react-native";
 import { Map as MapIcon } from "lucide-react-native";
 import { useTheme } from "@/hooks/useTheme";
 import { Screen, ScreenHeader } from "@/components/ui/Screen";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function DeliveryMap() {
   const { colors } = useTheme();
 
   return (
     <Screen>
-      <ScreenHeader title="Map" />
+      <ScreenHeader title="Map" right={<ThemeToggle size={20} />} />
       <View className="flex-1 items-center justify-center p-6">
         <MapIcon size={48} color={colors.mutedForeground} />
         <Text className="mt-4 text-center font-['Montserrat_400Regular'] text-body text-muted-foreground">

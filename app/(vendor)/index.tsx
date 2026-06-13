@@ -7,6 +7,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { router } from "expo-router";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function VendorDashboard() {
   const { colors } = useTheme();
@@ -23,7 +24,7 @@ export default function VendorDashboard() {
   if (!stores || !activeStore) {
     return (
       <Screen>
-        <ScreenHeader title="Dashboard" />
+        <ScreenHeader title="Dashboard" right={<ThemeToggle size={20} />} />
         <View className="p-4">
           <Skeleton height={200} />
         </View>
@@ -33,7 +34,11 @@ export default function VendorDashboard() {
 
   return (
     <Screen>
-      <ScreenHeader title={activeStore.name} subtitle={activeStore.locationName} />
+      <ScreenHeader
+        title={activeStore.name}
+        subtitle={activeStore.locationName}
+        right={<ThemeToggle size={20} />}
+      />
       <ScreenScrollView contentContainerStyle={{ padding: 16 }}>
       <View className="gap-6">
         {/* Stats */}

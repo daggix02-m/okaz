@@ -7,6 +7,7 @@ import { OrderCard } from "@/components/OrderCard";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen, ScreenHeader, ScreenFlatList } from "@/components/ui/Screen";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { router } from "expo-router";
 
 export default function CustomerOrders() {
@@ -16,7 +17,7 @@ export default function CustomerOrders() {
 
   return (
     <Screen>
-      <ScreenHeader title="My Orders" />
+      <ScreenHeader title="My Orders" right={<ThemeToggle />} />
 
       {isGuest ? (
         <EmptyState

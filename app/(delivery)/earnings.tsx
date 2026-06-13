@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Screen, ScreenHeader, ScreenScrollView } from "@/components/ui/Screen";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function DeliveryEarnings() {
   const { colors } = useTheme();
@@ -15,7 +16,7 @@ export default function DeliveryEarnings() {
 
   return (
     <Screen>
-      <ScreenHeader title="Earnings" />
+      <ScreenHeader title="Earnings" right={<ThemeToggle size={20} />} />
       <ScreenScrollView contentContainerStyle={{ padding: 16 }}>
         <View className="gap-6">
           {rider ? (

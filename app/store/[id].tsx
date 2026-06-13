@@ -11,7 +11,8 @@ import { ProductCard } from "@/components/ProductCard";
 import { Skeleton } from "@/components/ui/Skeleton";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import { getStoreImage } from "@/lib/image-helper";
+import { getResolvedStoreImage } from "@/lib/image-helper";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function StoreDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -46,6 +47,7 @@ export default function StoreDetail() {
               <ArrowLeft size={22} color={colors.foreground} />
             </TouchableOpacity>
           ),
+          headerRight: () => <ThemeToggle size={20} />,
         }}
       />
 
@@ -62,7 +64,7 @@ export default function StoreDetail() {
             <View className="flex-row items-center gap-3 mb-4">
               <View className="w-16 h-16 rounded-xl bg-surface overflow-hidden border border-border">
                 <Image
-                  source={{ uri: getStoreImage(store.name, store.category) }}
+                  source={{ uri: getResolvedStoreImage(store) }}
                   className="w-full h-full"
                   contentFit="cover"
                 />

@@ -8,6 +8,7 @@ import { useCurrentUser } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import * as Haptics from "expo-haptics";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function DeliveryJobs() {
   const { colors } = useTheme();
@@ -47,6 +48,7 @@ export default function DeliveryJobs() {
             ? `${currentRider.vehicleType} · ${currentRider.plateNumber}`
             : undefined
         }
+        right={<ThemeToggle size={20} />}
       />
 
       {!pendingOrders ? (

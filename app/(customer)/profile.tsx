@@ -9,6 +9,7 @@ import { useTheme } from "@/hooks/useTheme";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
 import { router } from "expo-router";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function CustomerProfile() {
   const { colors } = useTheme();
@@ -51,7 +52,7 @@ export default function CustomerProfile() {
 
   return (
     <Screen>
-      <ScreenHeader title="Profile" />
+      <ScreenHeader title="Profile" right={<ThemeToggle />} />
       <ScreenScrollView contentContainerStyle={{ padding: 16 }}>
       {isGuest ? (
         <View className="gap-6">

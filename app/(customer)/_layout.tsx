@@ -1,7 +1,7 @@
 import { Tabs, Redirect } from "expo-router";
 import { useCurrentUser } from "@/hooks/useAuth";
 import { View, ActivityIndicator } from "react-native";
-import { ShoppingBag, Package, ShoppingCart, Heart, User } from "lucide-react-native";
+import { Home, Package, ShoppingCart, Heart, User } from "lucide-react-native";
 import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getTabBarScreenOptions } from "@/lib/tab-bar-options";
@@ -34,8 +34,16 @@ export default function CustomerLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ focused, color, size }) => (
-            <ShoppingBag size={size} color={color} fill={focused ? color : "transparent"} />
+            <Home size={size} color={color} fill={focused ? color : "transparent"} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="map"
+        options={{
+          href: null,
+          title: "Map",
+          headerShown: false,
         }}
       />
       <Tabs.Screen

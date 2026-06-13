@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Screen, ScreenHeader, ScreenFlatList } from "@/components/ui/Screen";
-import { Search, SlidersHorizontal, ShoppingCart, MapPin, ShoppingBag, Smartphone, Laptop, Shirt, Sparkles } from "lucide-react-native";
+import { Search, SlidersHorizontal, ShoppingCart, MapPin, ShoppingBag, Smartphone, Laptop, Shirt, Sparkles, Map } from "lucide-react-native";
 import { useTheme } from "@/hooks/useTheme";
 import { useCurrentUser } from "@/hooks/useAuth";
 import { useProducts } from "@/hooks/useProducts";
@@ -22,6 +22,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useCartStore } from "@/stores/cart.store";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import * as Haptics from "expo-haptics";
+import { useScreenInsets } from "@/hooks/useScreenInsets";
 
 const FILTERS = [
   { id: "all", label: "All" },
@@ -31,6 +32,7 @@ const FILTERS = [
 
 export default function CustomerHome() {
   const { colors } = useTheme();
+  const insets = useScreenInsets();
   const { isAuthenticated } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("all");
@@ -283,6 +285,26 @@ export default function CustomerHome() {
           )
         }
       />
+      {/* Floating Map FAB */}
+      <TouchableOpacity
+        onPress={() => {
+          router.push("/(customer)/map");
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }}
+        className="w-14 h-14 rounded-full items-center justify-center shadow-lg border border-white/10"
+        style={{
+          position: "absolute",
+          bottom: 24,
+          right: 24,
+          backgroundColor: colors.primary,
+          zIndex: 999,
+          elevation: 5,
+        }}
+        accessibilityLabel="Open store map"
+        accessibilityRole="button"
+      >
+        <Map size={24} color={colors.primaryForeground} />
+      </TouchableOpacity>
     </Screen>
   );
 }

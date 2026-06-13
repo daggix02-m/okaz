@@ -88,3 +88,7 @@ export function getStoreImage(name: string, category: string): string {
 
   return STORE_IMAGES.default;
 }
+
+export function getResolvedStoreImage(store: any): string {
+  return store?.imageUrl || getStoreImage(store?.name || "", store?.category || "");
+}

@@ -18,6 +18,7 @@ import { useCartStore } from "@/stores/cart.store";
 import { useCurrentUser } from "@/hooks/useAuth";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function CustomerCart() {
   const { colors } = useTheme();
@@ -113,6 +114,7 @@ export default function CustomerCart() {
             ? `${items.length} ${items.length === 1 ? "item" : "items"}`
             : undefined
         }
+        right={<ThemeToggle />}
       />
 
       {step === "cart" ? (

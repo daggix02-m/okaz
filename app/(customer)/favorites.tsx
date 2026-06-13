@@ -9,6 +9,7 @@ import { StoreCard } from "@/components/StoreCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Screen, ScreenHeader, ScreenScrollView } from "@/components/ui/Screen";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { router } from "expo-router";
 
 export default function CustomerFavorites() {
@@ -25,7 +26,7 @@ export default function CustomerFavorites() {
 
   return (
     <Screen>
-      <ScreenHeader title="Favorites" />
+      <ScreenHeader title="Favorites" right={<ThemeToggle />} />
 
       {isGuest ? (
         <EmptyState

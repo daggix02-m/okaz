@@ -9,6 +9,7 @@ import { api } from "@/convex/_generated/api";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import * as Haptics from "expo-haptics";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function VendorProducts() {
   const { colors } = useTheme();
@@ -50,13 +51,16 @@ export default function VendorProducts() {
       <ScreenHeader
         title="Products"
         right={
-        <TouchableOpacity
-          onPress={() => setAdding(!adding)}
-          className="min-h-[48px] min-w-[48px] items-center justify-center"
-          accessibilityLabel="Add product"
-        >
-          <Plus size={22} color={colors.primary} />
-        </TouchableOpacity>
+          <View className="flex-row items-center gap-1">
+            <ThemeToggle size={20} />
+            <TouchableOpacity
+              onPress={() => setAdding(!adding)}
+              className="min-h-[48px] min-w-[48px] items-center justify-center"
+              accessibilityLabel="Add product"
+            >
+              <Plus size={22} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
         }
       />
 

@@ -3,7 +3,7 @@ import { Star } from "lucide-react-native";
 import { useTheme } from "@/hooks/useTheme";
 import { Doc } from "@/convex/_generated/dataModel";
 import { Image } from "expo-image";
-import { getStoreImage } from "@/lib/image-helper";
+import { getResolvedStoreImage } from "@/lib/image-helper";
 
 type Store = Doc<"stores">;
 
@@ -19,7 +19,7 @@ export function StoreCard({ store, onPress }: { store: Store; onPress: () => voi
       <View className="flex-row items-center gap-4">
         <View className="w-12 h-12 bg-surface rounded-lg overflow-hidden border border-border">
           <Image
-            source={{ uri: getStoreImage(store.name, store.category) }}
+            source={{ uri: getResolvedStoreImage(store) }}
             className="w-full h-full"
             contentFit="cover"
           />

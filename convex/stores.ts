@@ -11,6 +11,7 @@ const storeValidator = v.object({
   name: v.string(),
   description: v.optional(v.string()),
   imageStorageId: v.optional(v.id("_storage")),
+  imageUrl: v.optional(v.string()),
   category: v.string(),
   locationName: v.string(),
   lat: v.float64(),
@@ -25,14 +26,25 @@ const storeValidator = v.object({
   salesVolume: v.number(),
 });
 
+async function enrichStore(ctx: any, store: Doc<"stores">) {
+  const imageUrl = store.imageStorageId
+    ? await ctx.storage.getUrl(store.imageStorageId)
+    : null;
+  return {
+    ...store,
+    imageUrl: imageUrl ?? undefined,
+  };
+}
+
 export const listApproved = query({
   args: {},
   returns: v.array(storeValidator),
   handler: async (ctx) => {
-    return await ctx.db
+    const stores = await ctx.db
       .query("stores")
       .withIndex("by_approved", (q) => q.eq("isApproved", true))
       .collect();
+    return await Promise.all(stores.map((s) => enrichStore(ctx, s)));
   },
 });
 
@@ -40,7 +52,9 @@ export const getById = query({
   args: { storeId: v.id("stores") },
   returns: v.union(storeValidator, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db.get("stores", args.storeId);
+    const store = await ctx.db.get("stores", args.storeId);
+    if (!store) return null;
+    return await enrichStore(ctx, store);
   },
 });
 
@@ -49,10 +63,11 @@ export const getByOwner = query({
   returns: v.array(storeValidator),
   handler: async (ctx) => {
     const user = await getUserOrThrow(ctx);
-    return await ctx.db
+    const stores = await ctx.db
       .query("stores")
       .withIndex("by_owner", (q) => q.eq("ownerId", user._id))
       .collect();
+    return await Promise.all(stores.map((s) => enrichStore(ctx, s)));
   },
 });
 
@@ -200,9 +215,10 @@ export const getByCategory = query({
   args: { category: v.string() },
   returns: v.array(storeValidator),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const stores = await ctx.db
       .query("stores")
       .withIndex("by_category", (q) => q.eq("category", args.category))
       .collect();
+    return await Promise.all(stores.map((s) => enrichStore(ctx, s)));
   },
 });

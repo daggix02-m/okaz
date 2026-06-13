@@ -10,7 +10,7 @@ type ScreenProps = {
 
 export function Screen({ children, className }: ScreenProps) {
   return (
-    <View className={`flex-1 bg-background ${className ?? ""}`}>{children}</View>
+    <View className={`flex-1 bg-background ${className ?? ""}`} style={{ position: "relative" }}>{children}</View>
   );
 }
 

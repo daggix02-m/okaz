@@ -58,13 +58,16 @@ function AppContent() {
 
 function Shell() {
   const mode = useThemeStore((s) => s.mode);
-  const resolved = useThemeStore((s) => s.resolved);
-  const isDark = resolved() === "dark";
+  const resolvedFn = useThemeStore((s) => s.resolved);
   const { setColorScheme } = useColorScheme();
 
+  // Derive the current resolved string so React can track changes
+  const resolvedTheme = resolvedFn();
+  const isDark = resolvedTheme === "dark";
+
   useEffect(() => {
-    setColorScheme(resolved());
-  }, [resolved]);
+    setColorScheme(resolvedTheme);
+  }, [resolvedTheme]);
 
   return (
     <>

@@ -5,10 +5,9 @@ import { useTheme } from "@/hooks/useTheme";
 import * as Haptics from "expo-haptics";
 
 export function ThemeToggle({ size = 20 }: { size?: number }) {
-  const resolved = useThemeStore((s) => s.resolved);
   const toggle = useThemeStore((s) => s.toggle);
-  const isDark = resolved() === "dark";
-  const { colors } = useTheme();
+  const { theme, colors } = useTheme();
+  const isDark = theme === "dark";
 
   return (
     <TouchableOpacity
