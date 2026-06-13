@@ -1,11 +1,11 @@
 import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export const TAB_BAR_HEIGHT = 56;
-const HEADER_PADDING = 12;
+export const TAB_BAR_HEIGHT = 64;
+const HEADER_PADDING = 16;
 
 /** Minimum top inset when the platform reports none (common on mobile web). */
-const WEB_MIN_TOP_INSET = Platform.OS === "web" ? 12 : 0;
+const WEB_MIN_TOP_INSET = Platform.OS === "web" ? 47 : 0;
 
 export function useScreenInsets() {
   const insets = useSafeAreaInsets();

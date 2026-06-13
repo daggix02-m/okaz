@@ -5,6 +5,8 @@ import { useCallback, useState } from "react";
 import * as Haptics from "expo-haptics";
 import { useGuestStore } from "@/stores/guest.store";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import { makeRedirectUri } from "expo-auth-session";
 
 type SocialProvider = "google" | "apple";
 
@@ -26,36 +28,54 @@ export function SocialButton({ provider }: { provider: SocialProvider }) {
 
   const isDark = theme === "dark";
 
-  const bgColor =
-    provider === "google"
-      ? colors.card
-      : isDark
-        ? colors.surfaceElevated
-        : colors.foreground;
+  const bgColor = isDark ? "#242432" : colors.card;
+  const textColor = isDark ? "#ffffff" : colors.foreground;
+  const borderColor = isDark ? "rgba(255,255,255,0.1)" : colors.borderLight;
 
-  const textColor =
-    provider === "google"
-      ? colors.foreground
-      : isDark
-        ? colors.foreground
-        : colors.background;
+  const Icon = provider === "google" ? (
+    <Text style={{ color: textColor, fontSize: 18, fontWeight: "bold" }}>G</Text>
+  ) : (
+    <View className="mb-1">
+      <Text style={{ color: textColor, fontSize: 22 }}></Text>
+    </View>
+  );
 
-  const borderColor = provider === "google" ? colors.border : "transparent";
-
-  const handlePress = useCallback(async () => {
-    if (Platform.OS === "ios" && provider === "apple") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
+  const handlePress = async () => {
     setLoading(true);
     try {
-      await signIn(provider);
-      exitGuest();
-      router.replace("/");
-    } catch {
-      setLoading(false);
+      if (Platform.OS === "web") {
+        await signIn(provider, { redirectTo: window.location.origin });
+        return;
+      }
+
+      const redirectTo = makeRedirectUri({ scheme: "okaz" });
+      const result = await signIn(provider, { redirectTo });
+
+      if (result.redirect) {
+        const authResult = await WebBrowser.openAuthSessionAsync(
+          result.redirect.toString(),
+          redirectTo
+        );
+
+        if (authResult.type === "success" && authResult.url) {
+          const code = authResult.url.match(/[?&]code=([^&#]+)/)?.[1];
+          if (code) {
+            const signInResult = await signIn(provider, { code, redirectTo });
+            if (signInResult.signingIn) {
+              exitGuest();
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              router.replace("/");
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Social sign in error:", error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setLoading(false);
     }
-  }, [provider, signIn, exitGuest]);
+  };
 
   return (
     <View>
@@ -68,23 +88,18 @@ export function SocialButton({ provider }: { provider: SocialProvider }) {
         style={{
           backgroundColor: bgColor,
           borderColor,
-          boxShadow: colors.shadow,
+          borderWidth: 1,
         }}
-        className="flex-row items-center justify-center border rounded-xl min-h-[50px] px-5 gap-3"
+        className="flex-row items-center justify-center rounded-xl min-h-[50px] px-5 gap-3"
       >
         {loading ? (
           <ActivityIndicator color={textColor} size="small" />
         ) : (
           <>
+            {Icon}
             <Text
               style={{ color: textColor, fontWeight: "600", fontFamily: "Montserrat_600SemiBold" }}
-              className="text-lg"
-            >
-              {ICONS[provider]}
-            </Text>
-            <Text
-              style={{ color: textColor, fontWeight: "600", fontFamily: "Montserrat_600SemiBold" }}
-              className="text-sm"
+              className="text-[13px]"
             >
               {LABELS[provider]}
             </Text>

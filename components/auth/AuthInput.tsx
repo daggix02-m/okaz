@@ -30,7 +30,8 @@ export function AuthInput({
   error,
   accessibilityLabel,
 }: AuthInputProps) {
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
+  const isDark = theme === "dark";
   const [focused, setFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -48,33 +49,47 @@ export function AuthInput({
     ]).start();
   };
 
+  const containerBgColor = isDark ? "#242432" : colors.card;
   const borderColor = error
     ? colors.destructive
     : focused
       ? colors.primary
-      : colors.border;
+      : isDark
+        ? "rgba(255,255,255,0.1)"
+        : colors.borderLight;
+
+  const labelColor = error
+    ? colors.destructive
+    : focused
+      ? colors.primary
+      : isDark
+        ? "rgba(255,255,255,0.5)"
+        : colors.textSecondary;
 
   return (
     <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
       <View
         style={{
+          backgroundColor: containerBgColor,
           borderColor,
-          borderWidth: focused ? 1.5 : 1,
-          paddingTop: isActive ? 20 : 14,
-          paddingBottom: isActive ? 8 : 14,
+          borderWidth: 1,
+          paddingTop: isActive ? 16 : 12,
+          paddingBottom: isActive ? 8 : 12,
         }}
-        className="bg-surface rounded-xl px-4 min-h-[56px] justify-center"
+        className="rounded-xl px-4 min-h-[58px] justify-center"
       >
         {isActive && (
           <Text
             style={{
               position: "absolute",
-              top: 8,
+              top: 10,
               left: 16,
               fontSize: 10,
               fontWeight: "600",
-              color: error ? colors.destructive : focused ? colors.primary : colors.mutedForeground,
+              color: labelColor,
               fontFamily: "Montserrat_600SemiBold",
+              textTransform: "uppercase",
+              letterSpacing: 1,
             }}
           >
             {label}

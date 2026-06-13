@@ -37,17 +37,20 @@ html, body, #root {
 @media (min-width: 769px) {
   body {
     overflow: hidden;
-    background: radial-gradient(ellipse at 50% 20%, #f5f5f7 0%, #e8e8ed 100%);
+    background-color: #0b0b0d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  @media (min-width: 769px) {
-    body {
-      background: radial-gradient(ellipse at 50% 20%, #2c2c2e 0%, #1a1a1c 100%);
+  @media (prefers-color-scheme: dark) {
+    @media (min-width: 769px) {
+      body {
+        background: #0b0b0d;
+      }
     }
   }
-}
 
 body {
   -webkit-tap-highlight-color: transparent;

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Platform, View, Text, useWindowDimensions } from "react-native";
+import { Platform, View, Text, useWindowDimensions, StyleSheet } from "react-native";
 import { useTheme } from "@/hooks/useTheme";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -14,13 +14,13 @@ const ISLAND_WIDTH = 126;
 const ISLAND_HEIGHT = 34;
 const DESKTOP_BREAKPOINT = 768;
 
-const BEZEL_COLOR = "#1d1d1f";
+const BEZEL_COLOR = "#000000";
 const FRAME_SHADOW =
-  "0 0 0 0.5px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08), 0 20px 60px rgba(0,0,0,0.18)";
+  "0 0 0 1px rgba(255,255,255,0.1), 0 0 20px rgba(255,255,255,0.15), 0 0 80px rgba(255,255,255,0.25), 0 20px 100px rgba(0,0,0,0.6)";
 
 function StatusBarTime() {
   return (
-    <Text className="font-semibold text-[14px] text-foreground tracking-tight">
+    <Text className="font-bold text-[15px] text-foreground tracking-tight">
       9:41
     </Text>
   );
@@ -89,7 +89,7 @@ function DynamicIsland() {
       pointerEvents="none"
       style={{
         position: "absolute",
-        top: 10,
+        top: 11,
         left: "50%",
         marginLeft: -ISLAND_WIDTH / 2,
         width: ISLAND_WIDTH,
@@ -98,6 +98,8 @@ function DynamicIsland() {
         borderRadius: ISLAND_HEIGHT / 2,
         overflow: "hidden",
         zIndex: 50,
+        borderWidth: 0.5,
+        borderColor: "rgba(255,255,255,0.08)",
       }}
     >
       <View
@@ -134,16 +136,26 @@ function HomeIndicator() {
 }
 
 function PhoneFrame({ children }: { children: ReactNode }) {
-  const { colors } = useTheme();
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const phoneHeight = Math.floor(Math.min(windowHeight * 0.86, PHONE_MAX_HEIGHT));
+  const { theme, colors } = useTheme();
+  const isDark = theme === "dark";
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const phoneHeight = Math.floor(Math.min(windowHeight - 60, PHONE_MAX_HEIGHT));
 
   return (
     <View
-      className="h-full w-full flex-1 items-center justify-center"
       style={{
-        backgroundColor: "transparent",
-        padding: Math.max(24, (windowWidth - PHONE_WIDTH - FRAME_PADDING * 2) / 3),
+        position: Platform.OS === "web" ? ("fixed" as any) : "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: windowWidth,
+        height: windowHeight,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: isDark ? "#0b0b0d" : "#eff1f5",
+        zIndex: 9999,
+        overflow: "hidden",
       }}
     >
       <View
@@ -154,6 +166,7 @@ function PhoneFrame({ children }: { children: ReactNode }) {
           borderRadius: FRAME_RADIUS,
           padding: FRAME_PADDING,
           boxShadow: FRAME_SHADOW,
+          position: "relative",
         }}
       >
         <SafeAreaProvider
@@ -168,29 +181,35 @@ function PhoneFrame({ children }: { children: ReactNode }) {
           }}
         >
           <View
-            className="relative flex-1 overflow-hidden"
             style={{
+              flex: 1,
+              width: PHONE_WIDTH,
+              height: phoneHeight,
               borderRadius: SCREEN_RADIUS,
               backgroundColor: colors.background,
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <View className="absolute inset-0">{children}</View>
+            <View style={{ ...StyleSheet.absoluteFill, zIndex: 1 }}>
+              {children}
+            </View>
 
             <View
               pointerEvents="none"
-              className="flex-row items-end justify-between px-7"
+              className="flex-row items-end justify-between px-8"
               style={{
                 position: "absolute",
                 top: 0,
                 left: 0,
                 right: 0,
                 height: STATUS_BAR_HEIGHT,
-                paddingBottom: 8,
+                paddingBottom: 11,
                 zIndex: 40,
               }}
             >
               <StatusBarTime />
-              <View className="flex-row items-end gap-[6px] pb-[2px]">
+              <View className="flex-row items-end gap-[6px] pb-[2.5px]">
                 <SignalBars />
                 <WifiIcon />
                 <BatteryIcon />
@@ -228,7 +247,11 @@ export function WebMobileShell({ children }: { children: ReactNode }) {
 
   // Real mobile browsers get a full-screen native-feeling layout.
   if (width < DESKTOP_BREAKPOINT) {
-    return <View className="h-full w-full flex-1 bg-background">{children}</View>;
+    return (
+      <View style={{ flex: 1, width: "100%", height: "100%" }} className="bg-background">
+        {children}
+      </View>
+    );
   }
 
   return <PhoneFrame>{children}</PhoneFrame>;

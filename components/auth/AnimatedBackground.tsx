@@ -12,9 +12,9 @@ import Animated, {
 import { useTheme } from "@/hooks/useTheme";
 
 const BLOBS = [
-  { size: 180, x: -40, y: -60, color: "primary", delay: 0, duration: 12000 },
-  { size: 140, x: 60, y: 30, color: "accent", delay: 2000, duration: 15000 },
-  { size: 120, x: -20, y: 70, color: "chart1", delay: 4000, duration: 10000 },
+  { size: 300, x: -10, y: -20, color: "primary", delay: 0, duration: 15000 },
+  { size: 250, x: 40, y: 10, color: "accent", delay: 2000, duration: 18000 },
+  { size: 200, x: 10, y: 40, color: "white", delay: 4000, duration: 12000 },
 ] as const;
 
 export function AnimatedBackground() {
@@ -51,10 +51,10 @@ function Blob({
       ? colors.primary
       : color === "accent"
         ? colors.accent
-        : color === "chart1"
-          ? colors.chart1
+        : color === "white"
+          ? "#ffffff"
           : colors.primary;
-  const alpha = "10";
+  const alpha = "08";
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);

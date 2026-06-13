@@ -20,14 +20,25 @@ export function AuthButton({ label, onPress, loading, disabled }: AuthButtonProp
         accessibilityLabel={label}
         activeOpacity={0.85}
         style={[
-          { opacity: disabled ? 0.5 : 1, boxShadow: colors.shadow },
+          {
+            opacity: disabled ? 0.5 : 1,
+            backgroundColor: colors.primary,
+            shadowColor: colors.primary,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.2,
+            shadowRadius: 12,
+            elevation: 4,
+          },
         ]}
-        className="bg-primary rounded-xl min-h-[52px] justify-center items-center"
+        className="rounded-xl min-h-[50px] justify-center items-center"
       >
         {loading ? (
           <ActivityIndicator color={colors.primaryForeground} size="small" />
         ) : (
-          <Text className="text-primary-foreground text-base font-bold font-[Montserrat_700Bold]">
+          <Text
+            style={{ color: colors.primaryForeground }}
+            className="text-base font-bold font-[Montserrat_700Bold]"
+          >
             {label}
           </Text>
         )}

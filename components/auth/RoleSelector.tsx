@@ -28,13 +28,26 @@ interface RoleSelectorProps {
 }
 
 export function RoleSelector({ value, onChange }: RoleSelectorProps) {
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
+  const isDark = theme === "dark";
 
   return (
     <View className="flex-row gap-1.5">
       {ROLES.map((r) => {
         const isSelected = value === r.id;
         const Icon = ICON_COMPONENTS[r.icon];
+
+        const rBorderColor = isSelected
+          ? (isDark ? "#ffffff" : colors.primary)
+          : (isDark ? "rgba(255,255,255,0.1)" : colors.borderLight);
+
+        const rBgColor = isSelected
+          ? (isDark ? "rgba(255,255,255,0.1)" : colors.primaryLight)
+          : (isDark ? "#242432" : colors.card);
+
+        const contentColor = isSelected
+          ? (isDark ? "#ffffff" : colors.primary)
+          : (isDark ? "rgba(255,255,255,0.4)" : colors.textSecondary);
 
         return (
           <View key={r.id} className="flex-1">
@@ -45,33 +58,34 @@ export function RoleSelector({ value, onChange }: RoleSelectorProps) {
               accessibilityState={{ selected: isSelected }}
               activeOpacity={0.7}
               style={{
-                borderColor: isSelected ? colors.primary : colors.border,
-                backgroundColor: isSelected
-                  ? colors.primaryLight
-                  : colors.surface,
+                borderColor: rBorderColor,
+                backgroundColor: rBgColor,
               }}
-              className="items-center justify-center py-2.5 px-1 rounded-xl border-[1.5px] min-h-[64px] gap-1"
+              className="items-center justify-center py-2.5 px-1 rounded-xl border-[1px] min-h-[68px] gap-1"
             >
               <Icon
-                size={20}
-                color={isSelected ? colors.primary : colors.mutedForeground}
+                size={18}
+                color={contentColor}
               />
               <Text
                 style={{
-                  color: isSelected ? colors.primary : colors.mutedForeground,
+                  color: contentColor,
                   fontFamily: isSelected
                     ? "Montserrat_700Bold"
                     : "Montserrat_500Medium",
                 }}
-                className={`${isSelected ? "font-bold" : "font-medium"} text-[9px]`}
+                className={`${isSelected ? "font-bold" : "font-medium"} text-[10px]`}
               >
                 {r.label}
               </Text>
               {isSelected && (
                 <View
-                  className="absolute -top-1.5 -right-1.5 w-[18px] h-[18px] rounded-full bg-primary items-center justify-center"
+                  style={{
+                    backgroundColor: isDark ? "#ffffff" : colors.primary,
+                  }}
+                  className="absolute -top-1.5 -right-1.5 w-[16px] h-[16px] rounded-full items-center justify-center"
                 >
-                  <Text className="text-primary-foreground text-[10px] font-bold">
+                  <Text style={{ color: isDark ? "#000000" : "#ffffff" }} className="text-[9px] font-bold">
                     {"\u2713"}
                   </Text>
                 </View>

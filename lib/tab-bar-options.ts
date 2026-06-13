@@ -20,8 +20,8 @@ export function getTabBarScreenOptions(colors: ThemeColors, insets: EdgeInsets) 
       borderTopColor: colors.border,
       borderTopWidth: 0.5,
       height: TAB_BAR_HEIGHT + insets.bottom,
-      paddingBottom: Math.max(insets.bottom, 8),
-      paddingTop: 6,
+      paddingBottom: insets.bottom + 12,
+      paddingTop: 10,
     },
     tabBarLabelStyle: {
       fontSize: 10,

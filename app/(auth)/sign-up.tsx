@@ -33,10 +33,9 @@ function AuthWrapper({ children }: { children: ReactNode }) {
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-          justifyContent: "center",
           paddingHorizontal: 24,
-          paddingTop: top + 40,
-          paddingBottom: bottom + 32,
+          paddingTop: top + 60,
+          paddingBottom: bottom + 40,
         }}
         className="flex-1"
         showsVerticalScrollIndicator={false}
@@ -54,10 +53,9 @@ function AuthWrapper({ children }: { children: ReactNode }) {
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-          justifyContent: "center",
           paddingHorizontal: 24,
-          paddingTop: top + 40,
-          paddingBottom: bottom + 32,
+          paddingTop: top + 60,
+          paddingBottom: bottom + 40,
         }}
         className="flex-1"
         keyboardShouldPersistTaps="handled"
@@ -118,9 +116,17 @@ function PasswordStrength({ password }: { password: string }) {
 export default function SignUp() {
   const { signIn } = useAuthActions();
   const { top } = useScreenInsets();
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
+  const isDark = theme === "dark";
   const setGuest = useGuestStore((s) => s.setGuest);
   const exitGuest = useGuestStore((s) => s.exitGuest);
+
+  const handleGuestSignUp = () => {
+    setGuest();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    router.replace("/");
+  };
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -201,7 +207,7 @@ export default function SignUp() {
   return (
     <View className="flex-1 bg-background">
       <AnimatedBackground />
-      <View className="absolute right-4 z-10" style={{ top: top + 8 }}>
+      <View className="absolute right-4 z-10" style={{ top: top + 15 }}>
         <ThemeToggle size={22} />
       </View>
       <AuthWrapper>
@@ -213,17 +219,20 @@ export default function SignUp() {
                 transform: [{ scale: logoAnim.scale }],
               },
             ]}
-            className="items-center mb-7"
+            className="items-center mb-8"
           >
-            <Text className="text-display text-foreground tracking-[4px] font-[Montserrat_700Bold]">
+            <Text
+              style={{ color: colors.foreground }}
+              className="text-[40px] tracking-[12px] font-[Montserrat_700Bold] ml-[12px]"
+            >
               OKAZ
             </Text>
-              <Animated.View
+            <Animated.View
               style={{
-                height: 3,
-                backgroundColor: colors.primary,
-                borderRadius: 2,
-                marginTop: 6,
+                height: 1,
+                backgroundColor: isDark ? "rgba(255,255,255,0.6)" : "rgba(76,79,105,0.3)",
+                borderRadius: 1,
+                marginTop: 12,
                 opacity: logoAnim.opacity,
                 width: logoAnim.scale.interpolate({
                   inputRange: [0.95, 1],
@@ -232,22 +241,21 @@ export default function SignUp() {
                 }),
               }}
             />
-            <Text className="text-[13px] text-muted-foreground mt-2.5 font-[Montserrat_500Medium]">
+            <Text className="text-[12px] text-muted-foreground mt-4 font-[Montserrat_500Medium] tracking-[2px] opacity-80 uppercase">
               Create your account
             </Text>
           </Animated.View>
           {error ? (
             <Animated.View
               accessibilityRole="alert"
-              className="bg-destructive-light rounded-xl p-3 mb-4 border-l-[3px]"
-              style={{ borderLeftColor: colors.destructive }}
+              className="bg-destructive/10 rounded-xl p-3 mb-6 border-l-[3px] border-destructive"
             >
-              <Text className="text-destructive text-[13px] font-[Montserrat_500Medium]">
+              <Text className="text-destructive text-[12px] font-[Montserrat_500Medium]">
                 {error}
               </Text>
             </Animated.View>
           ) : null}
-          <View className="gap-3">
+          <View className="gap-4">
             <Animated.View
               style={{
                 opacity: nameAnim.opacity,
@@ -320,7 +328,10 @@ export default function SignUp() {
                 transform: [{ translateY: roleAnim.translateY }],
               }}
             >
-              <Text className="text-xs font-semibold text-foreground mb-1.5 ml-1 font-[Montserrat_600SemiBold]">
+              <Text
+                style={{ color: colors.foreground }}
+                className="text-[11px] font-semibold mb-2 ml-1 font-[Montserrat_600SemiBold] uppercase tracking-wider opacity-80"
+              >
                 I am a...
               </Text>
               <RoleSelector value={role} onChange={setRole} />
@@ -354,7 +365,14 @@ export default function SignUp() {
                   placeholderTextColor={colors.mutedForeground}
                   autoCapitalize="characters"
                   accessibilityLabel="Referral code"
-                  className="bg-surface border border-border rounded-xl px-4 py-3 text-[15px] text-foreground font-mono min-h-[48px] mt-1"
+                  style={{
+                    backgroundColor: isDark ? "#242432" : colors.card,
+                    borderColor: isDark ? "rgba(255,255,255,0.1)" : colors.borderLight,
+                    borderWidth: 1,
+                    color: colors.foreground,
+                    fontFamily: "FiraCode_400Regular",
+                  }}
+                  className="rounded-xl px-4 py-3 text-[14px] min-h-[50px] mt-1"
                 />
               ) : null}
             </Animated.View>
@@ -363,25 +381,45 @@ export default function SignUp() {
                 opacity: btnAnim.opacity,
                 transform: [{ scale: btnAnim.scale }],
               }}
+              className="gap-4 mt-3"
             >
               <AuthButton
                 label="Create Account"
                 onPress={handleSignUp}
                 loading={loading}
               />
+              <TouchableOpacity
+                onPress={handleGuestSignUp}
+                style={{
+                  borderColor: colors.primary,
+                  borderWidth: 1,
+                  backgroundColor: "transparent",
+                }}
+                className="rounded-xl min-h-[50px] justify-center items-center"
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Continue as Guest"
+              >
+                <Text
+                  style={{ color: colors.primary }}
+                  className="text-base font-bold font-[Montserrat_700Bold]"
+                >
+                  Continue as Guest
+                </Text>
+              </TouchableOpacity>
             </Animated.View>
           </View>
           <Animated.View
             style={[
               { opacity: dividerAnim.opacity },
             ]}
-            className="flex-row items-center gap-3 my-5"
+            className="flex-row items-center gap-3 my-8"
           >
-            <View className="flex-1 h-px" style={{ backgroundColor: colors.border }} />
-            <Text className="text-xs text-muted-foreground font-[Montserrat_500Medium]">
+            <View className="flex-1 h-px" style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(76,79,105,0.15)" }} />
+            <Text className="text-[11px] text-muted-foreground font-[Montserrat_500Medium] uppercase tracking-tighter opacity-80">
               or continue with
             </Text>
-            <View className="flex-1 h-px" style={{ backgroundColor: colors.border }} />
+            <View className="flex-1 h-px" style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(76,79,105,0.15)" }} />
           </Animated.View>
           <Animated.View
             style={[
@@ -390,7 +428,7 @@ export default function SignUp() {
                 transform: [{ translateY: socialAnim.translateY }],
               },
             ]}
-            className="gap-2.5"
+            className="gap-4"
           >
             <SocialButton provider="google" />
             <SocialButton provider="apple" />
@@ -399,33 +437,21 @@ export default function SignUp() {
             style={[
               { opacity: footerAnim.opacity },
             ]}
-            className="items-center mt-5 gap-3.5"
+            className="items-center mt-10 pb-4"
           >
-            <TouchableOpacity
-              onPress={() => {
-                setGuest();
-                router.replace("/(customer)");
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Continue as guest"
-              activeOpacity={0.6}
-              className="justify-center min-h-[44px]"
-              style={{ padding: 8 }}
-            >
-              <Text className="text-sm text-muted-foreground font-[Montserrat_600SemiBold]">
-                Continue as Guest
-              </Text>
-            </TouchableOpacity>
             <TouchableOpacity
               onPress={() => router.push("/(auth)/sign-in")}
               accessibilityRole="link"
               accessibilityLabel="Sign in instead"
               activeOpacity={0.6}
-              className="justify-center"
-              style={{ padding: 8 }}
+              className="py-2"
             >
-              <Text className="text-[13px] text-primary font-[Montserrat_600SemiBold]">
-                Already have an account? Sign in
+              <Text
+                style={{ color: colors.foreground }}
+                className="text-[12px] font-[Montserrat_600SemiBold] tracking-wide"
+              >
+                <Text className="text-muted-foreground opacity-80">Already have an account?</Text>{" "}
+                <Text style={{ color: colors.primary }}>Sign in</Text>
               </Text>
             </TouchableOpacity>
           </Animated.View>
