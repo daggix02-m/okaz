@@ -9,6 +9,7 @@
     "ios": "expo start --ios",
     "reset": "rm -rf node_modules && npm install",
     "lint": "tsc --noEmit",
+    "build": "expo export -p web",
     "convex:dev": "npx convex dev"
   },
   "dependencies": {
